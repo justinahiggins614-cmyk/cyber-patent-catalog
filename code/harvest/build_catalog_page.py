@@ -15,11 +15,61 @@ DST = os.path.join(ROOT, "index.html")
 DST2 = os.path.join(ROOT, "catalog.html")
 
 CLASS_NAMES = {
-    "H04L63": "Network security",
-    "H04L9": "Cryptography",
-    "G06F21": "System security",
-    "H04W12": "Wireless security",
-    "H04K": "Secret communication",
+    # A - Human necessities
+    "A01": "Agriculture & forestry", "A21": "Baking", "A22": "Butchery & meat",
+    "A23": "Foods & foodstuffs", "A24": "Tobacco", "A41": "Clothing",
+    "A42": "Headwear", "A43": "Footwear", "A44": "Jewellery & haberdashery",
+    "A45": "Luggage & hand articles", "A46": "Brushware", "A47": "Furniture",
+    "A61": "Medical & veterinary", "A62": "Life-saving & fire-fighting",
+    "A63": "Sports & games",
+    # B - Performing operations; transporting
+    "B01": "Chemical processes", "B02": "Crushing & milling", "B03": "Separating solids",
+    "B04": "Centrifuges", "B05": "Spraying & coating", "B06": "Mechanical vibrations",
+    "B07": "Sorting", "B08": "Cleaning", "B21": "Metal-working (no cutting)",
+    "B22": "Casting & powder metallurgy", "B23": "Machine tools", "B24": "Grinding & polishing",
+    "B25": "Hand tools", "B26": "Cutting tools", "B27": "Woodworking",
+    "B28": "Working stone & clay", "B29": "Plastics", "B30": "Presses",
+    "B31": "Paper & packaging", "B32": "Layered products", "B33": "3D printing",
+    "B41": "Printing", "B42": "Bookbinding", "B43": "Writing implements",
+    "B44": "Decorative arts", "B60": "Vehicles", "B61": "Railways",
+    "B62": "Cycles & motorcycles", "B63": "Ships", "B64": "Aircraft",
+    "B65": "Conveying & packaging", "B66": "Lifting & hoisting", "B67": "Bottles & containers",
+    "B68": "Upholstery", "B81": "Microtechnology", "B82": "Nanotechnology",
+    # C - Chemistry; metallurgy
+    "C01": "Inorganic chemistry", "C02": "Water treatment", "C03": "Glass & ceramics",
+    "C04": "Cements & concrete", "C05": "Fertilisers", "C06": "Explosives",
+    "C07": "Organic chemistry", "C08": "Polymers", "C09": "Dyes, paints & adhesives",
+    "C10": "Petroleum & fuels", "C11": "Oils, fats & detergents", "C12": "Biochemistry",
+    "C13": "Sugar", "C14": "Leather", "C21": "Iron metallurgy",
+    "C22": "Metallurgy & alloys", "C23": "Metal coating", "C25": "Electrolytic processes",
+    "C30": "Crystal growth",
+    # D - Textiles; paper
+    "D01": "Fibres & spinning", "D02": "Yarns", "D03": "Weaving",
+    "D04": "Knitting & lace", "D05": "Sewing & embroidery", "D06": "Textile treatment",
+    "D07": "Ropes & cables", "D21": "Paper-making",
+    # E - Fixed constructions
+    "E01": "Roads & bridges", "E02": "Hydraulic engineering", "E03": "Water & sewerage",
+    "E04": "Building", "E05": "Locks & safes", "E06": "Doors & windows",
+    "E21": "Drilling & mining",
+    # F - Mechanical engineering
+    "F01": "Engines (general)", "F02": "Combustion engines", "F03": "Wind & water motors",
+    "F04": "Pumps & compressors", "F15": "Fluid-pressure devices", "F16": "Machine elements",
+    "F17": "Gas & liquid storage", "F21": "Lighting", "F22": "Steam generation",
+    "F23": "Combustion apparatus", "F24": "Heating & cooling", "F25": "Refrigeration",
+    "F26": "Drying", "F27": "Furnaces & ovens", "F28": "Heat exchange",
+    "F41": "Weapons", "F42": "Ammunition & blasting",
+    # G - Physics
+    "G01": "Measuring & testing", "G02": "Optics", "G03": "Photography",
+    "G04": "Clocks & watches", "G05": "Controlling & regulating", "G06": "Computing",
+    "G07": "Checking devices", "G08": "Signalling", "G09": "Displays & education",
+    "G10": "Music & acoustics", "G11": "Information storage", "G12": "Instrument details",
+    "G16": "Applied ICT", "G21": "Nuclear engineering",
+    # H - Electricity
+    "H01": "Electric devices", "H02": "Electric power", "H03": "Electronic circuitry",
+    "H04": "Electric communication", "H05": "Electric techniques", "H10": "Semiconductors",
+    # Legacy specific classes (kept for existing records)
+    "H04L63": "Network security", "H04L9": "Cryptography", "G06F21": "System security",
+    "H04W12": "Wireless security", "H04K": "Secret communication",
 }
 
 
@@ -59,6 +109,8 @@ records.sort(key=lambda r: r[1].lower())
 
 data_json = json.dumps(records, separators=(",", ":"), ensure_ascii=False)
 class_json = json.dumps(CLASS_NAMES, ensure_ascii=False)
+areas = sorted(set(r[8] for r in records if r[8]))
+areas_json = json.dumps(areas, ensure_ascii=False)
 
 html = """<!DOCTYPE html>
 <html lang="en">
@@ -143,10 +195,10 @@ html = """<!DOCTYPE html>
 <body>
 <header>
   <h1>The Catalog of Public Patents</h1>
-  <p>The full collection &mdash; every cybersecurity patent gathered, searchable</p>
+  <p>The full collection &mdash; every public patent ever recorded, from every field of invention, all searchable</p>
   <div class="stats">
     <span class="chip"><b>__COUNT__</b> patents</span>
-    <span class="chip"><b>5</b> technology areas</span>
+    <span class="chip"><b>__AREAS_N__</b> technology areas</span>
     <span class="chip">Updated <b>__DATE__</b></span>
   </div>
 </header>
@@ -177,6 +229,7 @@ html = """<!DOCTYPE html>
 <script>
 var DATA = __DATA__;
 var CLASS_NAMES = __CLASSES__;
+var AREAS = __AREAS__;
 var LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
 var state = { q: "", cpc: "", sort: "az", shown: 40 };
 var filtered = [];
@@ -267,7 +320,7 @@ function jumpToLetter(L) {
 (function init() {
   var f = document.getElementById("filters");
   var btns = [{ c: "", n: "All areas" }].concat(
-    Object.keys(CLASS_NAMES).map(function (c) { return { c: c, n: CLASS_NAMES[c] }; }));
+    AREAS.map(function (c) { return { c: c, n: CLASS_NAMES[c] || c }; }));
   btns.forEach(function (b) {
     var el = document.createElement("button");
     el.type = "button";
@@ -321,7 +374,9 @@ function jumpToLetter(L) {
 """
 
 html = html.replace("__DATA__", data_json).replace("__CLASSES__", class_json)
+html = html.replace("__AREAS__", areas_json)
 html = html.replace("__COUNT__", f"{len(records):,}")
+html = html.replace("__AREAS_N__", f"{len(areas):,}")
 html = html.replace("__DATE__", date.today().isoformat())
 with open(DST, "w", encoding="utf-8") as fh:
     fh.write(html)
