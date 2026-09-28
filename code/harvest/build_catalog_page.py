@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the searchable Cyber Patent Catalog static site.
+"""Build the searchable Catalog of Public Patents static site.
 
 Run from the repo root:  python3 code/harvest/build_catalog_page.py
 Reads data/patents.jsonl, writes index.html and catalog.html with data embedded.
@@ -65,7 +65,7 @@ html = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cyber Patent Catalog</title>
+<title>The Catalog of Public Patents</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -125,7 +125,7 @@ html = """<!DOCTYPE html>
 </head>
 <body>
 <header>
-  <h1>Cyber Patent Catalog</h1>
+  <h1>The Catalog of Public Patents</h1>
   <p>The full collection &mdash; every cybersecurity patent gathered, searchable</p>
   <p class="stamp">__COUNT__ patents &middot; updated __DATE__</p>
 </header>
