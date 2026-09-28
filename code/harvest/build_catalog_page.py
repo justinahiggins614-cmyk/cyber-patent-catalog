@@ -6,10 +6,12 @@ Reads data/patents.jsonl, writes index.html with the data embedded.
 """
 import json
 import os
+from datetime import date
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC = os.path.join(ROOT, "data", "patents.jsonl")
 DST = os.path.join(ROOT, "index.html")
+DST2 = os.path.join(ROOT, "catalog.html")
 
 CLASS_NAMES = {
     "H04L63": "Network security",
@@ -55,6 +57,7 @@ html = """<!DOCTYPE html>
            background: linear-gradient(135deg, #1e3a8a, #0f172a); }
   header h1 { margin: 0 0 6px; font-size: 1.7em; }
   header p { margin: 0; color: #94a3b8; }
+  header p.stamp { margin-top: 8px; font-size: .85em; color: #60a5fa; font-weight: 600; }
   .bar { max-width: 860px; margin: 18px auto 0; padding: 0 16px; }
   #q { width: 100%; padding: 13px 16px; font-size: 1.05em; border-radius: 10px;
        border: 1px solid #334155; background: #1e293b; color: #e2e8f0; }
@@ -87,6 +90,7 @@ html = """<!DOCTYPE html>
 <header>
   <h1>Cyber Patent Catalog</h1>
   <p>Searchable index of cybersecurity patents &mdash; compatibility reference only</p>
+  <p class="stamp">__COUNT__ patents &middot; updated __DATE__</p>
 </header>
 <div class="bar">
   <input id="q" type="search" placeholder="Search by name, keyword, company, inventor, or patent number&hellip;" autocomplete="off">
@@ -180,6 +184,10 @@ function render() {
 """
 
 html = html.replace("__DATA__", data_json).replace("__CLASSES__", class_json)
+html = html.replace("__COUNT__", f"{len(records):,}")
+html = html.replace("__DATE__", date.today().isoformat())
 with open(DST, "w", encoding="utf-8") as fh:
     fh.write(html)
-print(f"wrote {DST} with {len(records)} patents ({os.path.getsize(DST)/1024:.0f} KB)")
+with open(DST2, "w", encoding="utf-8") as fh:
+    fh.write(html)
+print(f"wrote {DST} + catalog.html with {len(records)} patents ({os.path.getsize(DST)/1024:.0f} KB)")
