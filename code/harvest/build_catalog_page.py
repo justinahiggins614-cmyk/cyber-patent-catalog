@@ -121,81 +121,93 @@ html = """<!DOCTYPE html>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-         margin: 0; background: #0f172a; color: #e2e8f0; }
-  header { padding: 28px 20px 18px; text-align: center;
-           background: linear-gradient(135deg, #1e3a8a, #0f172a); }
-  header h1 { margin: 0 0 6px; font-size: 1.7em; }
-  header p { margin: 0; color: #94a3b8; }
-  header p.stamp { margin-top: 8px; font-size: .85em; color: #60a5fa; font-weight: 600; }
+         margin: 0; background: #eef2f6; color: #1f2a37; }
+  header { padding: 30px 20px 22px; text-align: center; color: #fff;
+           background: linear-gradient(160deg, #16337a, #0d2149);
+           border-bottom: 4px solid #c9a227; }
+  .seal { width: 74px; height: 74px; margin: 0 auto 12px; border-radius: 50%;
+          border: 3px double #c9a227; display: flex; align-items: center;
+          justify-content: center; font-family: Georgia, serif; font-size: 2em;
+          color: #e8c766; background: rgba(255,255,255,.05); }
+  .eyebrow { margin: 0 0 8px; font-size: .72em; letter-spacing: .35em;
+             color: #d9b84a; font-weight: 700; }
+  header h1 { margin: 0 0 8px; font-size: 1.9em; font-family: Georgia, "Times New Roman", serif;
+              letter-spacing: .01em; }
+  header p.sub { margin: 0 auto; max-width: 640px; color: #c3cfe6; font-size: .98em;
+                 line-height: 1.5; }
   .stats { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
-           margin-top: 14px; }
-  .stats .chip { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
-                 padding: 8px 16px; border-radius: 999px; font-size: .9em; color: #e2e8f0; }
+           margin-top: 16px; }
+  .stats .chip { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.22);
+                 padding: 8px 16px; border-radius: 999px; font-size: .9em; color: #e6ecf7; }
   .stats .chip b { color: #fff; }
   .sortrow { display: flex; align-items: center; justify-content: center; gap: 8px;
-             margin: 12px 0 0; color: #94a3b8; font-size: .9em; }
-  .sortrow select { background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+             margin: 14px 0 0; color: #5b6b7f; font-size: .9em; }
+  .sortrow select { background: #fff; color: #1f2a37; border: 1px solid #b9c6d6;
                    border-radius: 8px; padding: 8px 10px; font-size: .95em; }
   #totop { position: fixed; right: 16px; bottom: 16px; z-index: 30; width: 48px; height: 48px;
-           border-radius: 50%; border: none; background: #2563eb; color: #fff;
+           border-radius: 50%; border: none; background: #16337a; color: #fff;
            font-size: 1.4em; cursor: pointer; display: none;
-           box-shadow: 0 4px 14px rgba(0,0,0,.4); }
-  .card { transition: border-color .15s; }
-  .card:hover { border-color: #475569; }
-  .tag { display: inline-block; background: #1e3a8a; color: #bfdbfe; font-size: .75em;
-         font-weight: 600; padding: 3px 10px; border-radius: 999px; margin-top: 8px; }
-  .searchwrap { max-width: 860px; margin: 18px auto 0; padding: 0 16px; }
+           box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+  .tag { display: inline-block; background: #dbe4f5; color: #1e3a8a; font-size: .75em;
+         font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-top: 8px; }
+  .searchwrap { max-width: 860px; margin: 20px auto 0; padding: 0 16px; }
   .searchrow { display: flex; gap: 8px; }
-  #q { flex: 1; min-width: 0; padding: 13px 16px; font-size: 1.05em; border-radius: 10px;
-       border: 1px solid #334155; background: #1e293b; color: #e2e8f0; }
-  #q::placeholder { color: #64748b; }
-  #go { padding: 0 22px; border-radius: 10px; border: none; background: #2563eb;
-        color: #fff; font-size: 1.05em; font-weight: 600; cursor: pointer; }
-  #go:active { background: #1d4ed8; }
+  #q { flex: 1; min-width: 0; padding: 13px 16px; font-size: 1.05em; border-radius: 8px;
+       border: 1px solid #b9c6d6; background: #fff; color: #1f2a37; }
+  #q::placeholder { color: #8a97a8; }
+  #go { padding: 0 24px; border-radius: 8px; border: none; background: #16337a;
+        color: #fff; font-size: 1.05em; font-weight: 700; cursor: pointer; }
+  #go:active { background: #0d2149; }
   .filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
              margin: 14px 0 4px; }
-  .filters button { padding: 8px 14px; border-radius: 999px; border: 1px solid #334155;
-                    background: #1e293b; color: #cbd5e1; cursor: pointer; font-size: .9em; }
-  .filters button.active { background: #2563eb; border-color: #2563eb; color: #fff; }
-  #letters { position: sticky; top: 0; z-index: 20; background: #0f172a;
-             border-top: 1px solid #1e293b; border-bottom: 1px solid #1e293b;
+  .filters button { padding: 8px 14px; border-radius: 999px; border: 1px solid #9fb0c6;
+                    background: #fff; color: #33507e; cursor: pointer; font-size: .9em; }
+  .filters button.active { background: #16337a; border-color: #16337a; color: #fff; }
+  #letters { position: sticky; top: 0; z-index: 20; background: #ffffff;
+             border-top: 1px solid #d3dce6; border-bottom: 1px solid #d3dce6;
+             box-shadow: 0 2px 6px rgba(20,40,80,.08);
              display: flex; gap: 4px; overflow-x: auto; padding: 8px 10px;
-             margin-top: 12px; -webkit-overflow-scrolling: touch; }
+             margin-top: 14px; -webkit-overflow-scrolling: touch; }
   #letters button { flex: 0 0 auto; min-width: 34px; padding: 8px 0; border-radius: 8px;
-                    border: 1px solid #334155; background: #1e293b; color: #cbd5e1;
-                    font-size: .95em; font-weight: 600; cursor: pointer; }
-  #letters button.hit { background: #2563eb; border-color: #2563eb; color: #fff; }
+                    border: 1px solid #c4d0e0; background: #f4f7fb; color: #33507e;
+                    font-size: .95em; font-weight: 700; cursor: pointer; }
+  #letters button.hit { background: #16337a; border-color: #16337a; color: #fff; }
   #letters button:disabled { opacity: .25; cursor: default; }
-  #letters button.top { background: #334155; }
-  #count { text-align: center; color: #94a3b8; margin: 10px 0 0; font-size: .92em;
+  #letters button.top { background: #dbe4f5; }
+  #count { text-align: center; color: #5b6b7f; margin: 12px 0 0; font-size: .92em;
            padding: 0 16px; }
   #results { max-width: 860px; margin: 0 auto; padding: 12px 16px 60px; }
-  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px;
-          padding: 14px 16px; margin: 10px 0; scroll-margin-top: 64px; }
-  .card .num { font-size: .78em; color: #60a5fa; font-weight: 600; letter-spacing: .04em; }
-  .card h3 { margin: 6px 0 8px; font-size: 1.02em; line-height: 1.35; }
-  .card .meta { font-size: .85em; color: #94a3b8; }
-  .card .abs { font-size: .9em; color: #cbd5e1; margin-top: 8px; display: none;
-               line-height: 1.5; }
+  .card { background: #fff; border: 1px solid #d3dce6; border-left: 4px solid #c9a227;
+          border-radius: 8px; padding: 14px 16px; margin: 10px 0;
+          scroll-margin-top: 64px; box-shadow: 0 1px 3px rgba(20,40,80,.06); }
+  .card .num { font-size: .78em; color: #16337a; font-weight: 700; letter-spacing: .05em; }
+  .card h3 { margin: 6px 0 8px; font-size: 1.05em; line-height: 1.35; color: #14213a; }
+  .card .meta { font-size: .85em; color: #5b6b7f; }
+  .card .abs { font-size: .9em; color: #33415c; margin-top: 8px; display: none;
+               line-height: 1.55; }
   .card.open .abs { display: block; }
-  .card .toggle { margin-top: 8px; font-size: .85em; color: #60a5fa; cursor: pointer;
-                  background: none; border: none; padding: 0; }
-  .card a.full { display: inline-block; margin-top: 10px; font-size: .9em; font-weight: 600;
-                 color: #93c5fd; text-decoration: none; }
+  .card .toggle { margin-top: 8px; font-size: .85em; color: #1d4ed8; cursor: pointer;
+                  background: none; border: none; padding: 0; font-weight: 600; }
+  .card a.full { display: inline-block; margin-top: 10px; font-size: .9em; font-weight: 700;
+                 color: #1d4ed8; text-decoration: none; }
   .card a.full:hover { text-decoration: underline; }
-  #more { display: block; margin: 18px auto 0; padding: 11px 26px; border-radius: 10px;
-          border: 1px solid #334155; background: #2563eb; color: #fff; font-size: 1em;
+  #more { display: block; margin: 18px auto 0; padding: 11px 26px; border-radius: 8px;
+          border: none; background: #16337a; color: #fff; font-size: 1em; font-weight: 600;
           cursor: pointer; }
   .noscript { max-width: 860px; margin: 20px auto; padding: 16px; background: #7f1d1d;
-              border-radius: 10px; text-align: center; }
-  footer { text-align: center; color: #64748b; font-size: .8em; padding: 0 16px 30px;
-           max-width: 860px; margin: 0 auto; }
+              color: #fff; border-radius: 8px; text-align: center; }
+  footer { background: #0d2149; color: #a9b8d4; font-size: .8em; padding: 26px 20px 34px;
+           text-align: center; line-height: 1.6; }
+  footer .fname { font-family: Georgia, serif; color: #e8c766; font-size: 1.05em; }
 </style>
 </head>
 <body>
 <header>
+  <div class="seal">&#167;</div>
+  <p class="eyebrow">PUBLIC RECORDS INDEX</p>
   <h1>The Catalog of Public Patents</h1>
-  <p>The full collection &mdash; every public patent ever recorded, from every field of invention, all searchable</p>
+  <p class="sub">A comprehensive public index of published patent records &mdash;
+  every field of invention, from software to medicine to engineering &mdash; fully searchable.</p>
   <div class="stats">
     <span class="chip"><b>__COUNT__</b> patents</span>
     <span class="chip"><b>__AREAS_N__</b> technology areas</span>
@@ -223,8 +235,11 @@ html = """<!DOCTYPE html>
 <button id="more" type="button" style="display:none">Show more</button>
 <button id="totop" type="button" title="Back to top">&#8593;</button>
 <footer>
-  All patents remain the property of their respective owners and are cataloged here
-  for compatibility and certification. Full patent texts open on Google Patents.
+  <div class="fname">The Catalog of Public Patents</div>
+  <p>An independent index of publicly available patent records, cataloged for compatibility
+  and certification purposes. All patents remain the property of their respective owners.<br>
+  Full patent texts open on Google Patents. This catalog is not affiliated with the USPTO
+  or any government agency.</p>
 </footer>
 <script>
 var DATA = __DATA__;
