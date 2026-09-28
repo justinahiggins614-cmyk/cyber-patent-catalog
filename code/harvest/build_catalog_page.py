@@ -131,9 +131,7 @@ function card(r) {
   return '<div class="card"><div class="num">' + num + '</div><h3>' + title + '</h3>' +
     '<div class="meta">' + who + (dates ? " · " + dates : "") + "<br>" + cls + "</div>" +
     (abs ? '<div class="abs">' + abs + "</div>" +
-      '<button class="toggle" onclick="this.parentElement.classList.toggle(\\'open\\');' +
-      'this.textContent = this.parentElement.classList.contains(\\'open\\') ? ' +
-      "'Hide abstract' : 'Show abstract';\">Show abstract</button>" : "") +
+      '<button class="toggle" type="button">Show abstract</button>' : "") +
     "</div>";
 }
 function render() {
@@ -167,6 +165,13 @@ function render() {
     t = setTimeout(function () { state.q = input.value; apply(); }, 180);
   });
   document.getElementById("more").onclick = function () { state.shown += 60; render(); };
+  document.getElementById("results").addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest(".toggle") : null;
+    if (!b) return;
+    var c = b.parentElement;
+    c.classList.toggle("open");
+    b.textContent = c.classList.contains("open") ? "Hide abstract" : "Show abstract";
+  });
   apply();
 })();
 </script>
