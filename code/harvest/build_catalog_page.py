@@ -75,6 +75,23 @@ html = """<!DOCTYPE html>
   header h1 { margin: 0 0 6px; font-size: 1.7em; }
   header p { margin: 0; color: #94a3b8; }
   header p.stamp { margin-top: 8px; font-size: .85em; color: #60a5fa; font-weight: 600; }
+  .stats { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+           margin-top: 14px; }
+  .stats .chip { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+                 padding: 8px 16px; border-radius: 999px; font-size: .9em; color: #e2e8f0; }
+  .stats .chip b { color: #fff; }
+  .sortrow { display: flex; align-items: center; justify-content: center; gap: 8px;
+             margin: 12px 0 0; color: #94a3b8; font-size: .9em; }
+  .sortrow select { background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+                   border-radius: 8px; padding: 8px 10px; font-size: .95em; }
+  #totop { position: fixed; right: 16px; bottom: 16px; z-index: 30; width: 48px; height: 48px;
+           border-radius: 50%; border: none; background: #2563eb; color: #fff;
+           font-size: 1.4em; cursor: pointer; display: none;
+           box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+  .card { transition: border-color .15s; }
+  .card:hover { border-color: #475569; }
+  .tag { display: inline-block; background: #1e3a8a; color: #bfdbfe; font-size: .75em;
+         font-weight: 600; padding: 3px 10px; border-radius: 999px; margin-top: 8px; }
   .searchwrap { max-width: 860px; margin: 18px auto 0; padding: 0 16px; }
   .searchrow { display: flex; gap: 8px; }
   #q { flex: 1; min-width: 0; padding: 13px 16px; font-size: 1.05em; border-radius: 10px;
@@ -127,7 +144,11 @@ html = """<!DOCTYPE html>
 <header>
   <h1>The Catalog of Public Patents</h1>
   <p>The full collection &mdash; every cybersecurity patent gathered, searchable</p>
-  <p class="stamp">__COUNT__ patents &middot; updated __DATE__</p>
+  <div class="stats">
+    <span class="chip"><b>__COUNT__</b> patents</span>
+    <span class="chip"><b>5</b> technology areas</span>
+    <span class="chip">Updated <b>__DATE__</b></span>
+  </div>
 </header>
 <div class="searchwrap">
   <div class="searchrow">
@@ -135,12 +156,20 @@ html = """<!DOCTYPE html>
     <button id="go" type="button">Search</button>
   </div>
   <div class="filters" id="filters"></div>
+  <div class="sortrow">Sort:
+    <select id="sort">
+      <option value="az">A to Z</option>
+      <option value="new">Newest first</option>
+      <option value="old">Oldest first</option>
+    </select>
+  </div>
 </div>
 <nav id="letters" aria-label="Jump by letter"></nav>
 <noscript><div class="noscript">This catalog needs JavaScript turned on to search and list patents.</div></noscript>
 <p id="count"></p>
 <div id="results"></div>
 <button id="more" type="button" style="display:none">Show more</button>
+<button id="totop" type="button" title="Back to top">&#8593;</button>
 <footer>
   All patents remain the property of their respective owners and are cataloged here
   for compatibility and certification. Full patent texts open on Google Patents.
@@ -149,7 +178,7 @@ html = """<!DOCTYPE html>
 var DATA = __DATA__;
 var CLASS_NAMES = __CLASSES__;
 var LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
-var state = { q: "", cpc: "", shown: 40 };
+var state = { q: "", cpc: "", sort: "az", shown: 40 };
 var filtered = [];
 
 function hay(r) {
@@ -166,6 +195,14 @@ function apply() {
     if (q && hay(r).indexOf(q) < 0) return false;
     return true;
   });
+  if (state.sort === "new" || state.sort === "old") {
+    filtered.sort(function (a, b) {
+      var da = a[7] || "", db = b[7] || "";
+      if (da === db) return a[1].toLowerCase() < b[1].toLowerCase() ? -1 : 1;
+      if (state.sort === "new") return db < da ? -1 : 1;
+      return da < db ? -1 : 1;
+    });
+  }
   state.shown = 40;
   render();
 }
@@ -182,7 +219,7 @@ function card(r, i) {
     '<div class="meta">' +
     (assignee ? "Owner: " + esc(assignee) + "<br>" : "") +
     (inventor ? "Inventor: " + esc(inventor) + "<br>" : "") +
-    (dates ? dates + "<br>" : "") + cls + "</div>" +
+    (dates ? dates : "") + '</div><div><span class="tag">' + cls + "</span></div>" +
     (abs ? '<div class="abs">' + abs + "</div>" +
       '<button class="toggle" type="button">Show abstract</button><br>' : "") +
     '<a class="full" href="' + link + '" target="_blank" rel="noopener">View full patent text &#8594;</a>' +
@@ -255,6 +292,15 @@ function jumpToLetter(L) {
     if (e.key === "Enter") { e.preventDefault(); doSearch(); }
   });
   document.getElementById("more").onclick = function () { state.shown += 60; render(); };
+  document.getElementById("sort").onchange = function (e) {
+    state.sort = e.target.value;
+    apply();
+  };
+  var totop = document.getElementById("totop");
+  totop.onclick = function () { window.scrollTo(0, 0); };
+  window.addEventListener("scroll", function () {
+    totop.style.display = window.scrollY > 600 ? "block" : "none";
+  });
   document.getElementById("letters").addEventListener("click", function (e) {
     var b = e.target.closest ? e.target.closest("button[data-l]") : null;
     if (!b || b.disabled) return;
