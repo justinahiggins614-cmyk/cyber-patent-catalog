@@ -79,6 +79,9 @@ html = """<!DOCTYPE html>
   .card.open .abs { display: block; }
   .card .toggle { margin-top: 8px; font-size: .85em; color: #60a5fa; cursor: pointer;
                   background: none; border: none; padding: 0; }
+  .card a.full { display: inline-block; margin-top: 10px; font-size: .9em; font-weight: 600;
+                 color: #93c5fd; text-decoration: none; }
+  .card a.full:hover { text-decoration: underline; }
   #more { display: block; margin: 18px auto 0; padding: 11px 26px; border-radius: 10px;
           border: 1px solid #334155; background: #2563eb; color: #fff; font-size: 1em;
           cursor: pointer; }
@@ -89,7 +92,7 @@ html = """<!DOCTYPE html>
 <body>
 <header>
   <h1>Cyber Patent Catalog</h1>
-  <p>Searchable index of cybersecurity patents &mdash; compatibility reference only</p>
+  <p>The full collection &mdash; every cybersecurity patent gathered, searchable</p>
   <p class="stamp">__COUNT__ patents &middot; updated __DATE__</p>
 </header>
 <div class="bar">
@@ -100,8 +103,8 @@ html = """<!DOCTYPE html>
 <div id="results"></div>
 <button id="more" style="display:none">Show more</button>
 <footer>
-  Patent records belong to their respective owners and are listed for compatibility
-  and certification reference only. Data harvested from Google Patents.
+  All patents remain the property of their respective owners and are cataloged here
+  for compatibility and certification. Full patent texts open on Google Patents.
 </footer>
 <script>
 var DATA = __DATA__;
@@ -128,14 +131,20 @@ function esc(s) {
 }
 function card(r) {
   var num = esc(r[0]), title = esc(r[1]), abs = esc(r[2]);
-  var who = esc(r[3] || r[4] || "Unknown");
-  var dates = [r[7] && ("pub " + r[7]), r[6] && ("granted " + r[6])]
-    .filter(Boolean).map(esc).join(" · ");
+  var assignee = esc(r[3]), inventor = esc(r[4]);
+  var dates = [["Filed", r[5]], ["Published", r[7]], ["Granted", r[6]]]
+    .filter(function (d) { return d[1]; })
+    .map(function (d) { return d[0] + " " + esc(d[1]); }).join(" · ");
   var cls = esc((CLASS_NAMES[r[8]] || r[8]) + (r[8] ? " (" + r[8] + ")" : ""));
+  var link = "https://patents.google.com/patent/" + encodeURIComponent(r[0]) + "/";
   return '<div class="card"><div class="num">' + num + '</div><h3>' + title + '</h3>' +
-    '<div class="meta">' + who + (dates ? " · " + dates : "") + "<br>" + cls + "</div>" +
+    '<div class="meta">' +
+    (assignee ? "Owner: " + assignee + "<br>" : "") +
+    (inventor ? "Inventor: " + inventor + "<br>" : "") +
+    (dates ? dates + "<br>" : "") + cls + "</div>" +
     (abs ? '<div class="abs">' + abs + "</div>" +
-      '<button class="toggle" type="button">Show abstract</button>' : "") +
+      '<button class="toggle" type="button">Show abstract</button><br>' : "") +
+    '<a class="full" href="' + link + '" target="_blank" rel="noopener">View full patent text &#8594;</a>' +
     "</div>";
 }
 function render() {
