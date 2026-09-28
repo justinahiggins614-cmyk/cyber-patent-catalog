@@ -47,7 +47,7 @@ print(len(firewall), "firewall patents")
 
 ## Important note
 
-Patents listed here belong to their respective owners. They are referenced for **compatibility and certification purposes only** — inclusion in this catalog claims no ownership of any third-party patent or product.
+Patents listed here belong to their respective owners. They are cataloged for **compatibility and certification** — inclusion in this catalog claims no ownership of any third-party patent or product.
 
 ## License
 

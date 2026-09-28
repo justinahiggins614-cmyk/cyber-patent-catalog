@@ -7,6 +7,7 @@ Reads data/patents.jsonl, writes index.html with the data embedded.
 import json
 import os
 from datetime import date
+from html import unescape as html_unescape
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC = os.path.join(ROOT, "data", "patents.jsonl")
@@ -28,16 +29,17 @@ with open(SRC, encoding="utf-8") as fh:
         if not line:
             continue
         d = json.loads(line)
+        g = lambda k: html_unescape(str(d.get(k, "") or ""))
         records.append([
-            d.get("publication_number", ""),
-            d.get("title", ""),
-            d.get("abstract_snippet", ""),
-            d.get("assignee", ""),
-            d.get("inventor", ""),
-            d.get("filing_date", ""),
-            d.get("grant_date", ""),
-            d.get("publication_date", ""),
-            d.get("cpc", ""),
+            g("publication_number"),
+            g("title"),
+            g("abstract_snippet"),
+            g("assignee"),
+            g("inventor"),
+            g("filing_date"),
+            g("grant_date"),
+            g("publication_date"),
+            g("cpc"),
         ])
 
 data_json = json.dumps(records, separators=(",", ":"), ensure_ascii=False)
@@ -131,7 +133,7 @@ function esc(s) {
 }
 function card(r) {
   var num = esc(r[0]), title = esc(r[1]), abs = esc(r[2]);
-  var assignee = esc(r[3]), inventor = esc(r[4]);
+  var assignee = (r[3] || "").trim(), inventor = (r[4] || "").trim();
   var dates = [["Filed", r[5]], ["Published", r[7]], ["Granted", r[6]]]
     .filter(function (d) { return d[1]; })
     .map(function (d) { return d[0] + " " + esc(d[1]); }).join(" · ");
@@ -139,8 +141,8 @@ function card(r) {
   var link = "https://patents.google.com/patent/" + encodeURIComponent(r[0]) + "/";
   return '<div class="card"><div class="num">' + num + '</div><h3>' + title + '</h3>' +
     '<div class="meta">' +
-    (assignee ? "Owner: " + assignee + "<br>" : "") +
-    (inventor ? "Inventor: " + inventor + "<br>" : "") +
+    (assignee ? "Owner: " + esc(assignee) + "<br>" : "") +
+    (inventor ? "Inventor: " + esc(inventor) + "<br>" : "") +
     (dates ? dates + "<br>" : "") + cls + "</div>" +
     (abs ? '<div class="abs">' + abs + "</div>" +
       '<button class="toggle" type="button">Show abstract</button><br>' : "") +
