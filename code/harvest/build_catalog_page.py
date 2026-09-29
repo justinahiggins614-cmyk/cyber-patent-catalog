@@ -232,6 +232,7 @@ html = """<!DOCTYPE html>
 <a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">Wiki Leaks</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Calculator</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">AI Telephone Book</a>
 </div>
 <header>
   <div class="seal">&#167;</div>
