@@ -177,6 +177,7 @@ function card(r, i) {
     (abs ? '<div class="abs">' + abs + "</div>" +
       '<button class="toggle" type="button">Show abstract</button><br>' : "") +
     '<a class="full" href="' + link + '" target="_blank" rel="noopener">View full patent text &#8594;</a>' +
+    ' &middot; <a class="full" href="https://justinahiggins614-cmyk.github.io/jah-wiki/?page=' + encodeURIComponent("PAT:" + r[0]) + '" target="_blank" rel="noopener" title="Open the official JAH Wiki article for this patent">&#128214; JAH Wiki article</a>' +
     "</div>";
 }
 function renderLetters() {
