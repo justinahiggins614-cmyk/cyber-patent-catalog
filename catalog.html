@@ -85,7 +85,6 @@
   footer { background: #0d2149; color: #a9b8d4; font-size: .8em; padding: 26px 20px 34px;
            text-align: center; line-height: 1.6; }
   footer .fname { font-family: Georgia, serif; color: #e8c766; font-size: 1.05em; }
-
   .ptools { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
   .pbtn { border: 1px solid #16337a; background: #16337a; color: #fff; border-radius: 8px;
           padding: 8px 12px; font-size: .85em; cursor: pointer; }
@@ -104,9 +103,22 @@
   .airow { display: flex; gap: 6px; }
   .airow input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 8px;
                  border: 1px solid #b9c6d6; font-size: .9em; }
+
+  .jahnet { background:#0d2149; color:#a9b8d4; font-size:.78em; padding:7px 12px; text-align:center; line-height:2; }
+  .jahnet-t { color:#e8c766; font-weight:700; letter-spacing:.25em; margin-right:10px; }
+  .jahnet a { color:#9fc2ff; text-decoration:none; margin:0 7px; white-space:nowrap; }
+  .jahnet a:hover { text-decoration:underline; }
 </style>
 </head>
 <body>
+<div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
+<a href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">Patent Catalog</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/">Spec Catalog</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">IWB Dictionary</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">Wiki Leaks</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Calculator</a>
+</div>
 <header>
   <div class="seal">&#167;</div>
   <p class="eyebrow">PUBLIC RECORDS INDEX</p>
@@ -199,6 +211,8 @@ function card(r, i) {
     '<div class="ptools">' +
     '<button class="pbtn readbtn" type="button" data-i="' + i + '">&#128266; Read aloud</button>' +
     '<button class="pbtn ghost aibtn" type="button" data-i="' + i + '">&#128172; Ask the AI</button>' +
+    '<button class="pbtn ghost copybtn" type="button" data-i="' + i + '">&#10697; Copy</button>' +
+    '<button class="pbtn ghost dlbtn" type="button" data-i="' + i + '">&#8681; Download</button>' +
     '</div>' +
     '<div class="aichat"><div class="ailog"></div>' +
     '<div class="airow"><input type="text" class="aiinput" placeholder="Ask about this patent&hellip;" aria-label="Ask the AI about this patent">' +
@@ -328,7 +342,7 @@ function jumpToLetter(L) {
   function readText2(text, btn, done){
     stopAudio2();
     if (!text || !text.trim()){ if(done)done(); return; }
-    readingBtn = btn; if (btn) btn.innerHTML="\u23F9 Stop";
+    readingBtn = btn; if (btn) btn.innerHTML="⏹ Stop";
     var fin = function(){ if(done)done(); };
     if (hasSpeech2()){
       try { window.speechSynthesis.cancel(); } catch(e){}
@@ -374,7 +388,7 @@ function jumpToLetter(L) {
     var t = " " + String(q).toLowerCase() + " ";
     function has(){ for (var i=0;i<arguments.length;i++) if (t.indexOf(arguments[i])>=0) return true; return false; }
     if (has("hello"," hi "," hey ","good morning","good afternoon","good evening"))
-      return "Hello! I'm the personal AI for patent " + num + ". Ask me who invented it, who owns it, what it's about, or its filing and grant dates \u2014 I answer from this catalog's record.";
+      return "Hello! I'm the personal AI for patent " + num + ". Ask me who invented it, who owns it, what it's about, or its filing and grant dates — I answer from this catalog's record.";
     if (has("inventor","who invented","who made","who created","invented by","who designed"))
       return inv ? ("The listed inventor is " + inv + ".") : "This record doesn't name an inventor.";
     if (has("owner","who owns","owned by","company","assignee","who holds","holder"))
@@ -399,7 +413,7 @@ function jumpToLetter(L) {
       return "You're welcome! Anything else about patent " + num + "?";
     if (has("bye","goodbye"))
       return "Goodbye! I'll be right here on patent " + num + " whenever you need me.";
-    return "I can tell you about this patent \u2014 try: who invented it, who owns it, what it's about (or \u2018explain simply\u2019), its field, or its filing and grant dates.";
+    return "I can tell you about this patent — try: who invented it, who owns it, what it's about (or ‘explain simply’), its field, or its filing and grant dates.";
   }
   function aiBubble(log, who, text){
     var k = -1, div = document.createElement("div");
@@ -411,6 +425,40 @@ function jumpToLetter(L) {
       div.innerHTML = "<span>" + esc(text) + "</span>";
     }
     log.appendChild(div); log.scrollTop = log.scrollHeight;
+  }
+
+  function patentFileText(r){
+    var L = [];
+    L.push("THE CATALOG OF PUBLIC PATENTS");
+    L.push("Patent: " + r[0]);
+    L.push("Title: " + r[1]);
+    if ((r[3]||"").trim()) L.push("Owner: " + r[3].trim());
+    if ((r[4]||"").trim()) L.push("Inventor: " + r[4].trim());
+    if (r[5]) L.push("Filed: " + r[5]);
+    if (r[7]) L.push("Published: " + r[7]);
+    if (r[6]) L.push("Granted: " + r[6]);
+    L.push("Field: " + (CLASS_NAMES[r[8]] || r[8] || "general invention") + (r[8] ? " (" + r[8] + ")" : ""));
+    L.push("Full text: https://patents.google.com/patent/" + encodeURIComponent(r[0]) + "/");
+    if ((r[2]||"").trim()) L.push("", "Abstract:", r[2].trim());
+    return L.join("\n");
+  }
+  function downloadFile2(name, content){
+    var b = new Blob([content], {type: "text/plain"});
+    var u = URL.createObjectURL(b), a = document.createElement("a");
+    a.href = u; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); }, 800);
+  }
+  function copyText2(t, btn){
+    function done(){ if (btn){ var o = btn.innerHTML; btn.innerHTML = "Copied!"; setTimeout(function(){ btn.innerHTML = o; }, 1400); } }
+    function fallback(){
+      var ta = document.createElement("textarea"); ta.value = t;
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); done(); } catch(e){}
+      ta.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done, fallback);
+    } else fallback();
   }
   document.getElementById("results").addEventListener("click", function (e) {
     var rb = e.target.closest ? e.target.closest(".readbtn") : null;
@@ -444,6 +492,17 @@ function jumpToLetter(L) {
     var ar = e.target.closest ? e.target.closest(".airead") : null;
     if (ar){
       readText2(AIREPLIES[+ar.getAttribute("data-k")] || "", null);
+      return;
+    }
+    var cb = e.target.closest ? e.target.closest(".copybtn") : null;
+    if (cb){
+      copyText2(patentFileText(filtered[+cb.getAttribute("data-i")]), cb);
+      return;
+    }
+    var db = e.target.closest ? e.target.closest(".dlbtn") : null;
+    if (db){
+      var r2 = filtered[+db.getAttribute("data-i")];
+      downloadFile2("patent-" + String(r2[0]).replace(/[^A-Za-z0-9]+/g, "_") + ".txt", patentFileText(r2));
       return;
     }
     var b = e.target.closest ? e.target.closest(".toggle") : null;
