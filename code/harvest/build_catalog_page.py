@@ -6,6 +6,8 @@ Reads data/patents.jsonl, writes index.html and catalog.html with data embedded.
 """
 import json
 import os
+import re
+import urllib.parse
 from datetime import date
 from html import unescape as html_unescape
 
@@ -428,10 +430,10 @@ function jumpToLetter(L) {
     function(t){ return "https://code.responsivevoice.org/getvoice.php?t="+encodeURIComponent(t)+"&tl=en-US"; },
     function(t){ return "https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q="+encodeURIComponent(t); },
     function(t){ return "https://translate.googleapis.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q="+encodeURIComponent(t); }];
-  function fxChunks2(text){ var out=[], cur="", parts=String(text).split(/([.!?]["']?(?:\s+|$))/);
+  function fxChunks2(text){ var out=[], cur="", parts=String(text).split(/([.!?]["']?(?:\\s+|$))/);
     function pushWords(s){ var w=s.split(" "), c=""; for (var k=0;k<w.length;k++){ var t=(c+" "+w[k]).trim();
       if (t.length>180){ if (c) out.push(c); c=w[k]; } else c=t; } if (c) out.push(c); }
-    for (var i=0;i<parts.length;i+=2){ var s=((parts[i]||"")+(parts[i+1]||"")).replace(/\s+/g," ").trim(); if(!s) continue;
+    for (var i=0;i<parts.length;i+=2){ var s=((parts[i]||"")+(parts[i+1]||"")).replace(/\\s+/g," ").trim(); if(!s) continue;
       if (s.length>180){ if(cur){out.push(cur);cur="";} pushWords(s); continue; }
       if (cur && (cur+" "+s).length>180){ out.push(cur); cur=s; } else cur=cur?cur+" "+s:s; }
     if (cur) out.push(cur); return out; }
@@ -493,7 +495,7 @@ function jumpToLetter(L) {
     return m.slice(0, n).join(" ").trim();
   }
   function linkify(s){
-    return esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    return esc(s).replace(/(https?:\\/\\/[^\\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
   }
   function patentAI(r, q){
     var num=r[0], title=r[1], abs=(r[2]||"").trim(), owner=(r[3]||"").trim(), inv=(r[4]||"").trim();
@@ -675,3 +677,45 @@ with open(DST, "w", encoding="utf-8") as fh:
 with open(DST2, "w", encoding="utf-8") as fh:
     fh.write(html)
 print(f"wrote {DST} + catalog.html with {len(records)} patents ({os.path.getsize(DST)/1024:.0f} KB)")
+
+# ---- per-record sitemap (invisible plumbing: keeps Google findability fresh) ----
+SITE = "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/"
+CHUNK = 40000  # well under the 50k sitemap limit
+sitemap_files = []
+for n, start in enumerate(range(0, len(records), CHUNK), 1):
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for r in records[start:start + CHUNK]:
+        loc = SITE + "?patent=" + urllib.parse.quote(r[0], safe="")
+        lines.append(f'  <url><loc>{loc}</loc><changefreq>monthly</changefreq></url>')
+    lines.append('</urlset>')
+    fname = f"sitemap-records-{n}.xml"
+    with open(os.path.join(ROOT, fname), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+    sitemap_files.append(fname)
+# drop stale extra shard files from earlier runs
+import glob as _glob
+for stale in _glob.glob(os.path.join(ROOT, "sitemap-records-*.xml")):
+    if os.path.basename(stale) not in sitemap_files:
+        os.remove(stale)
+ilines = ['<?xml version="1.0" encoding="UTF-8"?>',
+          '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+          f'  <sitemap><loc>{SITE}sitemap.xml</loc></sitemap>']
+for fname in sitemap_files:
+    ilines.append(f'  <sitemap><loc>{SITE}{fname}</loc></sitemap>')
+ilines.append('</sitemapindex>')
+with open(os.path.join(ROOT, "sitemap-index.xml"), "w", encoding="utf-8") as fh:
+    fh.write("\n".join(ilines) + "\n")
+print(f"wrote {len(sitemap_files)} sitemap-records file(s), {len(records)} urls")
+# ---- api.json count refresh (byte-preserving: only the two count fields) ----
+api_path = os.path.join(ROOT, "api.json")
+try:
+    api_txt = open(api_path, encoding="utf-8").read()
+    api_txt = re.sub(r'"records_approx":\s*\d+',
+                     f'"records_approx": {len(records)}', api_txt)
+    api_txt = re.sub(r'"records_as_of":\s*"[^"]*"',
+                     f'"records_as_of": "{date.today().isoformat()}"', api_txt)
+    open(api_path, "w", encoding="utf-8").write(api_txt)
+    print("refreshed api.json counts")
+except FileNotFoundError:
+    pass
