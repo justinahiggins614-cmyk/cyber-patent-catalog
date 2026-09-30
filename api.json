@@ -1,0 +1,36 @@
+{
+  "site": "Globally Rejustered Patent Catalog",
+  "site_url": "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/",
+  "creator": "Justin Addam Higgins (JAH)",
+  "description": "Every public patent ever recorded, from every field of invention \u2014 full harvested records, searchable and readable.",
+  "for_bots": "Machine-readable manifest. Humans use the site above; bots, scrapers, and AI assistants should use the endpoints below \u2014 plain JSON/JSONL over HTTPS, no JavaScript needed.",
+  "records_approx": 15254,
+  "records_as_of": "2026-09-29",
+  "note": "Counts grow on automated schedules; re-read this file for the latest shape of the data.",
+  "endpoints": [
+    {
+      "path": "data/patents.jsonl",
+      "format": "jsonl",
+      "desc": "All patent records, one JSON object per line. Keyed by publication number."
+    },
+    {
+      "path": "data/catalog.json",
+      "format": "json",
+      "desc": "Catalog metadata and per-field counts."
+    },
+    {
+      "path": "data/patents.idx.json.gz",
+      "format": "gzipped json",
+      "desc": "Search index over the patent records."
+    }
+  ],
+  "deep_links": [
+    {
+      "pattern": "?patent=<publication-number>",
+      "desc": "Deep link to a patent's detail view on the human site."
+    }
+  ],
+  "raw_github_base": "https://raw.githubusercontent.com/justinahiggins614-cmyk/cyber-patent-catalog/main/",
+  "raw_example": "https://raw.githubusercontent.com/justinahiggins614-cmyk/cyber-patent-catalog/main/data/patents.jsonl",
+  "sitemap": "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/sitemap.xml"
+}
