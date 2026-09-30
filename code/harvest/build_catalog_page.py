@@ -632,7 +632,33 @@ function jumpToLetter(L) {
       if (btn) btn.click();
     }
   });
-  apply();
+  /* ---- ?patent= deep link (invisible): jump straight to a patent record ---- */
+  var deepLinked = false;
+  try {
+    var pnum = new URLSearchParams(window.location.search).get("patent");
+    if (pnum && String(pnum).trim()) {
+      pnum = String(pnum).trim();
+      state.q = pnum;
+      var pq = document.getElementById("q");
+      if (pq) pq.value = pnum;
+      apply();
+      var pU = pnum.toUpperCase(), ti = -1, pk;
+      for (pk = 0; pk < filtered.length; pk++) {
+        if (String(filtered[pk][0]).toUpperCase() === pU) { ti = pk; break; }
+      }
+      if (ti >= 0) {
+        if (ti >= state.shown) { state.shown = ti + 1; render(); }
+        var pel = document.getElementById("p" + ti);
+        if (pel) {
+          pel.scrollIntoView(true);
+          pel.style.borderColor = "#2563eb";
+          setTimeout(function () { pel.style.borderColor = ""; }, 1600);
+        }
+        deepLinked = true;
+      }
+    }
+  } catch (e) {}
+  if (!deepLinked) apply();
 })();
 </script>
 </body>
