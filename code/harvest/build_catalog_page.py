@@ -117,7 +117,7 @@ html = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Catalog of Public Patents</title>
+<title>Globally Rejustered Patent Catalog</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -226,18 +226,18 @@ html = """<!DOCTYPE html>
 </head>
 <body>
 <div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
-<a href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">Patent Catalog</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/">Spec Catalog</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">IWB Dictionary</a>
+<a href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">Globally Rejustered Patent Catalog</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/">Signature Spec Catalog Pending Patents</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">The Signature Dictionary</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">Wiki Leaks</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Calculator</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">AI Telephone Book</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Signature Universal Paradox Immune Calculator</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Telephone Book</a>
 </div>
 <header>
   <div class="seal">&#167;</div>
   <p class="eyebrow">PUBLIC RECORDS INDEX</p>
-  <h1>The Catalog of Public Patents</h1>
+  <h1>Globally Rejustered Patent Catalog</h1>
   <p class="sub">A comprehensive public index of published patent records &mdash;
   every field of invention, from software to medicine to engineering &mdash; fully searchable.</p>
   <div class="stats">
@@ -267,7 +267,7 @@ html = """<!DOCTYPE html>
 <button id="more" type="button" style="display:none">Show more</button>
 <button id="totop" type="button" title="Back to top">&#8593;</button>
 <footer>
-  <div class="fname">The Catalog of Public Patents</div>
+  <div class="fname">Globally Rejustered Patent Catalog</div>
   <p>An independent index of publicly available patent records, cataloged for compatibility
   and certification purposes. All patents remain the property of their respective owners.<br>
   Full patent texts open on Google Patents. This catalog is not affiliated with the USPTO
