@@ -230,7 +230,7 @@ html = """<!DOCTYPE html>
 <a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/">Signature Spec Catalog Pending Patents</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">The Signature Dictionary</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">Wiki Leaks</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">JAH-N Wiki</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Signature Universal Paradox Immune Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Telephone Book</a>
 </div>
