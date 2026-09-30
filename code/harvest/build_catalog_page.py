@@ -235,6 +235,7 @@ html = """<!DOCTYPE html>
 <a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">JAH-N Wiki</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Signature Universal Paradox Immune Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Telephone Book</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-computer-systems/">The Signature PC System Depository</a>
 </div>
 <header>
   <div class="seal">&#167;</div>
