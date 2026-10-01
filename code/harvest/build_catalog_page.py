@@ -1,78 +1,63 @@
 #!/usr/bin/env python3
-"""Build the searchable Catalog of Public Patents static site.
+"""Build the Globally Rejustered Patent Catalog site (lazy-load architecture).
 
 Run from the repo root:  python3 code/harvest/build_catalog_page.py
-Reads data/patents.jsonl, writes index.html and catalog.html with data embedded.
+Reads data/patents.jsonl and writes:
+  data/patents.search.json.gz  compact search index (titles/numbers/meta + byte offsets)
+  data/meta.json               authoritative catalog metadata
+  index.html / catalog.html    small app shell (~90KB) — the dataset is NOT inlined
+
+The browser loads the search index (~1-3MB gz) then fetches individual full
+records on demand via HTTP Range requests against data/patents.jsonl, using
+the byte offsets in the search index. Called by the cyber-patent-drip-harvest
+cron step 5 after every harvest sync.
 """
+import gzip
 import json
 import os
 import re
 import urllib.parse
+import hashlib
 from datetime import date
 from html import unescape as html_unescape
 
+from build_template import build_html, CLASS_NAMES, SECTION_NAMES
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC = os.path.join(ROOT, "data", "patents.jsonl")
+IDMAP = os.path.join(ROOT, "code", "harvest", "jah_patent_ids.json")
+SEARCH_DST = os.path.join(ROOT, "data", "patents.search.json.gz")
+META_DST = os.path.join(ROOT, "data", "meta.json")
 DST = os.path.join(ROOT, "index.html")
 DST2 = os.path.join(ROOT, "catalog.html")
 
-CLASS_NAMES = {
-    # A - Human necessities
-    "A01": "Agriculture & forestry", "A21": "Baking", "A22": "Butchery & meat",
-    "A23": "Foods & foodstuffs", "A24": "Tobacco", "A41": "Clothing",
-    "A42": "Headwear", "A43": "Footwear", "A44": "Jewellery & haberdashery",
-    "A45": "Luggage & hand articles", "A46": "Brushware", "A47": "Furniture",
-    "A61": "Medical & veterinary", "A62": "Life-saving & fire-fighting",
-    "A63": "Sports & games",
-    # B - Performing operations; transporting
-    "B01": "Chemical processes", "B02": "Crushing & milling", "B03": "Separating solids",
-    "B04": "Centrifuges", "B05": "Spraying & coating", "B06": "Mechanical vibrations",
-    "B07": "Sorting", "B08": "Cleaning", "B21": "Metal-working (no cutting)",
-    "B22": "Casting & powder metallurgy", "B23": "Machine tools", "B24": "Grinding & polishing",
-    "B25": "Hand tools", "B26": "Cutting tools", "B27": "Woodworking",
-    "B28": "Working stone & clay", "B29": "Plastics", "B30": "Presses",
-    "B31": "Paper & packaging", "B32": "Layered products", "B33": "3D printing",
-    "B41": "Printing", "B42": "Bookbinding", "B43": "Writing implements",
-    "B44": "Decorative arts", "B60": "Vehicles", "B61": "Railways",
-    "B62": "Cycles & motorcycles", "B63": "Ships", "B64": "Aircraft",
-    "B65": "Conveying & packaging", "B66": "Lifting & hoisting", "B67": "Bottles & containers",
-    "B68": "Upholstery", "B81": "Microtechnology", "B82": "Nanotechnology",
-    # C - Chemistry; metallurgy
-    "C01": "Inorganic chemistry", "C02": "Water treatment", "C03": "Glass & ceramics",
-    "C04": "Cements & concrete", "C05": "Fertilisers", "C06": "Explosives",
-    "C07": "Organic chemistry", "C08": "Polymers", "C09": "Dyes, paints & adhesives",
-    "C10": "Petroleum & fuels", "C11": "Oils, fats & detergents", "C12": "Biochemistry",
-    "C13": "Sugar", "C14": "Leather", "C21": "Iron metallurgy",
-    "C22": "Metallurgy & alloys", "C23": "Metal coating", "C25": "Electrolytic processes",
-    "C30": "Crystal growth",
-    # D - Textiles; paper
-    "D01": "Fibres & spinning", "D02": "Yarns", "D03": "Weaving",
-    "D04": "Knitting & lace", "D05": "Sewing & embroidery", "D06": "Textile treatment",
-    "D07": "Ropes & cables", "D21": "Paper-making",
-    # E - Fixed constructions
-    "E01": "Roads & bridges", "E02": "Hydraulic engineering", "E03": "Water & sewerage",
-    "E04": "Building", "E05": "Locks & safes", "E06": "Doors & windows",
-    "E21": "Drilling & mining",
-    # F - Mechanical engineering
-    "F01": "Engines (general)", "F02": "Combustion engines", "F03": "Wind & water motors",
-    "F04": "Pumps & compressors", "F15": "Fluid-pressure devices", "F16": "Machine elements",
-    "F17": "Gas & liquid storage", "F21": "Lighting", "F22": "Steam generation",
-    "F23": "Combustion apparatus", "F24": "Heating & cooling", "F25": "Refrigeration",
-    "F26": "Drying", "F27": "Furnaces & ovens", "F28": "Heat exchange",
-    "F41": "Weapons", "F42": "Ammunition & blasting",
-    # G - Physics
-    "G01": "Measuring & testing", "G02": "Optics", "G03": "Photography",
-    "G04": "Clocks & watches", "G05": "Controlling & regulating", "G06": "Computing",
-    "G07": "Checking devices", "G08": "Signalling", "G09": "Displays & education",
-    "G10": "Music & acoustics", "G11": "Information storage", "G12": "Instrument details",
-    "G16": "Applied ICT", "G21": "Nuclear engineering",
-    # H - Electricity
-    "H01": "Electric devices", "H02": "Electric power", "H03": "Electronic circuitry",
-    "H04": "Electric communication", "H05": "Electric techniques", "H10": "Semiconductors",
-    # Legacy specific classes (kept for existing records)
-    "H04L63": "Network security", "H04L9": "Cryptography", "G06F21": "System security",
-    "H04W12": "Wireless security", "H04K": "Secret communication",
-}
+NUM_RE = re.compile(r"^([A-Z]{2})(\d+)([A-Z]\d*)?$")
+
+
+def parse_number(pub):
+    """Split a publication number into (country, number, kind) — canonical ID parts."""
+    n = (pub or "").upper().replace(" ", "")
+    m = NUM_RE.match(n)
+    if m:
+        return m.group(1), m.group(2), m.group(3) or ""
+    digits = re.sub(r"\D", "", n)
+    return "", digits or n, ""
+
+
+def canonical_id(pub):
+    c, num, kind = parse_number(pub)
+    return (c + num + kind).upper()
+
+
+def record_type(kind, grant_date):
+    k = (kind or "").upper()
+    if k.startswith("B") or k.startswith("C") or k.startswith("E"):
+        return "Granted patent"
+    if k.startswith("A") or k.startswith("U") or k.startswith("P"):
+        return "Published patent application"
+    if grant_date:
+        return "Granted patent"
+    return "Patent record (type not specified by source)"
 
 
 def letter_of(title):
@@ -84,639 +69,172 @@ def letter_of(title):
     return "#"
 
 
-records = []
-with open(SRC, encoding="utf-8") as fh:
-    for line in fh:
-        line = line.strip()
-        if not line:
-            continue
-        d = json.loads(line)
+def main():
+    today = date.today().isoformat()
+    # --- persistent JAH-PAT id map (permanent catalog identity, never reassigned)
+    try:
+        idmap = json.load(open(IDMAP, encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        idmap = {}
+    next_id = max([int(v.split("-")[-1]) for v in idmap.values()] or [0]) + 1
+
+    # --- read source records with byte offsets (for lazy Range fetches)
+    raws = []
+    with open(SRC, "rb") as f:
+        while True:
+            off = f.tell()
+            line = f.readline()
+            if not line:
+                break
+            if not line.strip():
+                continue
+            try:
+                raws.append((json.loads(line.decode("utf-8")), off, len(line)))
+            except Exception as e:
+                print("SKIP bad line at offset %d: %s" % (off, e))
+
+    # --- enrich + quarantine + dedupe (quarantine flags; data is never dropped)
+    enriched = []
+    seen = {}
+    dupes = 0
+    quarantined = 0
+    for d, off, ln in raws:
         g = lambda k: html_unescape(str(d.get(k, "") or ""))
+        pub = g("publication_number")
         title = g("title")
-        records.append([
-            g("publication_number"),
-            title,
-            g("abstract_snippet"),
-            g("assignee"),
-            g("inventor"),
-            g("filing_date"),
-            g("grant_date"),
-            g("publication_date"),
-            g("cpc"),
-            letter_of(title),
+        country, number, kind = parse_number(pub)
+        canon = canonical_id(pub)
+        rtype = record_type(kind, g("grant_date"))
+        flags = []
+        if not title:
+            flags.append("missing-title")
+        if not canon or not re.search(r"\d", canon):
+            flags.append("malformed-number")
+        pd = g("publication_date")
+        if pd and pd > "2030-01-01":
+            flags.append("future-date")
+        if canon in seen:
+            flags.append("possible-duplicate")
+            dupes += 1
+        else:
+            seen[canon] = True
+        if flags:
+            quarantined += 1
+        if canon not in idmap:
+            idmap[canon] = "JAH-PAT-%06d" % next_id
+            next_id += 1
+        enriched.append({
+            "jah": idmap[canon],
+            "pub": pub, "title": title, "abstract": g("abstract_snippet"),
+            "assignee": g("assignee"), "inventor": g("inventor"),
+            "priority_date": g("priority_date"), "filing_date": g("filing_date"),
+            "grant_date": g("grant_date"), "publication_date": g("publication_date"),
+            "language": g("language") or "en", "cpc": g("cpc"),
+            "country": country, "number": number, "kind": kind,
+            "canon": canon, "family": (country + number).upper(),
+            "rtype": rtype, "flags": flags,
+            "off": off, "len": ln,
+        })
+
+    with open(IDMAP, "w", encoding="utf-8") as f:
+        json.dump(idmap, f, indent=1, sort_keys=True)
+
+    # --- compact search index (abstract capped at 400 chars; full record lazy-fetched)
+    rows = []
+    for e in enriched:
+        rows.append([
+            e["pub"], e["title"], e["abstract"][:400], e["inventor"], e["assignee"],
+            e["cpc"], e["publication_date"], e["off"], e["len"], e["jah"],
+            e["rtype"], e["family"], e["country"], e["kind"], letter_of(e["title"]),
+            1 if e["flags"] else 0,
         ])
+    rows.sort(key=lambda r: r[1].lower())
+    with gzip.open(SEARCH_DST, "wt", encoding="utf-8") as gz:
+        json.dump(rows, gz, separators=(",", ":"), ensure_ascii=False)
+    print("search index: %d rows -> %s (%.1f MB)" % (
+        len(rows), SEARCH_DST, os.path.getsize(SEARCH_DST) / 1048576))
 
-# Alphabetical by title so the A-Z jump bar makes sense.
-records.sort(key=lambda r: r[1].lower())
+    # --- authoritative metadata
+    h = hashlib.sha256()
+    for e in enriched:
+        h.update((e["canon"] + "|" + e["title"]).encode("utf-8"))
+    sections = {}
+    for e in enriched:
+        s = (e["cpc"] or "?")[:1]
+        sections[s] = sections.get(s, 0) + 1
+    meta = {
+        "catalog_version": "GRPC-" + today.replace("-", ""),
+        "record_count": len(enriched),
+        "last_updated": today,
+        "source_snapshot": "Google Patents harvest, all CPC A-H, 1976-2026",
+        "catalog_hash": "sha256:" + h.hexdigest(),
+        "sections": sections,
+        "dupes_flagged": dupes,
+        "quarantined": quarantined,
+    }
+    with open(META_DST, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=1)
+    print("meta:", json.dumps(meta))
 
-data_json = json.dumps(records, separators=(",", ":"), ensure_ascii=False)
-class_json = json.dumps(CLASS_NAMES, ensure_ascii=False)
-areas = sorted(set(r[8] for r in records if r[8]))
-areas_json = json.dumps(areas, ensure_ascii=False)
+    html = build_html(meta)
+    for dst in (DST, DST2):
+        with open(dst, "w", encoding="utf-8") as f:
+            f.write(html)
+    print("wrote %s + catalog.html (%d KB each)" % (DST, os.path.getsize(DST) // 1024))
 
-html = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Globally Rejustered Patent Catalog</title>
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-         margin: 0; background: #eef2f6; color: #1f2a37; }
-  header { padding: 30px 20px 22px; text-align: center; color: #fff;
-           background: linear-gradient(160deg, #16337a, #0d2149);
-           border-bottom: 4px solid #c9a227; }
-  .seal { width: 74px; height: 74px; margin: 0 auto 12px; border-radius: 50%;
-          border: 3px double #c9a227; display: flex; align-items: center;
-          justify-content: center; font-family: Georgia, serif; font-size: 2em;
-          color: #e8c766; background: rgba(255,255,255,.05); }
-  .eyebrow { margin: 0 0 8px; font-size: .72em; letter-spacing: .35em;
-             color: #d9b84a; font-weight: 700; }
-  header h1 { margin: 0 0 8px; font-size: 1.9em; font-family: Georgia, "Times New Roman", serif;
-              letter-spacing: .01em; }
-  header p.sub { margin: 0 auto; max-width: 640px; color: #c3cfe6; font-size: .98em;
-                 line-height: 1.5; }
-  .stats { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
-           margin-top: 16px; }
-  .stats .chip { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.22);
-                 padding: 8px 16px; border-radius: 999px; font-size: .9em; color: #e6ecf7; }
-  .stats .chip b { color: #fff; }
-  .sortrow { display: flex; align-items: center; justify-content: center; gap: 8px;
-             margin: 14px 0 0; color: #5b6b7f; font-size: .9em; }
-  .sortrow select { background: #fff; color: #1f2a37; border: 1px solid #b9c6d6;
-                   border-radius: 8px; padding: 8px 10px; font-size: .95em; }
-  #totop { position: fixed; right: 16px; bottom: 16px; z-index: 30; width: 48px; height: 48px;
-           border-radius: 50%; border: none; background: #16337a; color: #fff;
-           font-size: 1.4em; cursor: pointer; display: none;
-           box-shadow: 0 4px 14px rgba(0,0,0,.3); }
-  .tag { display: inline-block; background: #dbe4f5; color: #1e3a8a; font-size: .75em;
-         font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-top: 8px; }
-  .searchwrap { max-width: 860px; margin: 20px auto 0; padding: 0 16px; }
-  .searchrow { display: flex; gap: 8px; }
-  #q { flex: 1; min-width: 0; padding: 13px 16px; font-size: 1.05em; border-radius: 8px;
-       border: 1px solid #b9c6d6; background: #fff; color: #1f2a37; }
-  #q::placeholder { color: #8a97a8; }
-  #go { padding: 0 24px; border-radius: 8px; border: none; background: #16337a;
-        color: #fff; font-size: 1.05em; font-weight: 700; cursor: pointer; }
-  #go:active { background: #0d2149; }
-  .filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-             margin: 14px 0 4px; }
-  .filters button { padding: 8px 14px; border-radius: 999px; border: 1px solid #9fb0c6;
-                    background: #fff; color: #33507e; cursor: pointer; font-size: .9em; }
-  .filters button.active { background: #16337a; border-color: #16337a; color: #fff; }
-  #letters { position: sticky; top: 0; z-index: 20; background: #ffffff;
-             border-top: 1px solid #d3dce6; border-bottom: 1px solid #d3dce6;
-             box-shadow: 0 2px 6px rgba(20,40,80,.08);
-             display: flex; gap: 4px; overflow-x: auto; padding: 8px 10px;
-             margin-top: 14px; -webkit-overflow-scrolling: touch; }
-  #letters button { flex: 0 0 auto; min-width: 34px; padding: 8px 0; border-radius: 8px;
-                    border: 1px solid #c4d0e0; background: #f4f7fb; color: #33507e;
-                    font-size: .95em; font-weight: 700; cursor: pointer; }
-  #letters button.hit { background: #16337a; border-color: #16337a; color: #fff; }
-  #letters button:disabled { opacity: .25; cursor: default; }
-  #letters button.top { background: #dbe4f5; }
-  #count { text-align: center; color: #5b6b7f; margin: 12px 0 0; font-size: .92em;
-           padding: 0 16px; }
-  #results { max-width: 860px; margin: 0 auto; padding: 12px 16px 60px; }
-  .card { background: #fff; border: 1px solid #d3dce6; border-left: 4px solid #c9a227;
-          border-radius: 8px; padding: 14px 16px; margin: 10px 0;
-          scroll-margin-top: 64px; box-shadow: 0 1px 3px rgba(20,40,80,.06); }
-  .card .num { font-size: .78em; color: #16337a; font-weight: 700; letter-spacing: .05em; }
-  .card h3 { margin: 6px 0 8px; font-size: 1.05em; line-height: 1.35; color: #14213a; }
-  .card .meta { font-size: .85em; color: #5b6b7f; }
-  .card .abs { font-size: .9em; color: #33415c; margin-top: 8px; display: none;
-               line-height: 1.55; }
-  .card.open .abs { display: block; }
-  .card .toggle { margin-top: 8px; font-size: .85em; color: #1d4ed8; cursor: pointer;
-                  background: none; border: none; padding: 0; font-weight: 600; }
-  .card a.full { display: inline-block; margin-top: 10px; font-size: .9em; font-weight: 700;
-                 color: #1d4ed8; text-decoration: none; }
-  .card a.full:hover { text-decoration: underline; }
-  #more { display: block; margin: 18px auto 0; padding: 11px 26px; border-radius: 8px;
-          border: none; background: #16337a; color: #fff; font-size: 1em; font-weight: 600;
-          cursor: pointer; }
-  .noscript { max-width: 860px; margin: 20px auto; padding: 16px; background: #7f1d1d;
-              color: #fff; border-radius: 8px; text-align: center; }
-  footer { background: #0d2149; color: #a9b8d4; font-size: .8em; padding: 26px 20px 34px;
-           text-align: center; line-height: 1.6; }
-  footer .fname { font-family: Georgia, serif; color: #e8c766; font-size: 1.05em; }
-  .ptools { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .pbtn { border: 1px solid #16337a; background: #16337a; color: #fff; border-radius: 8px;
-          padding: 8px 12px; font-size: .85em; cursor: pointer; }
-  .pbtn.ghost { background: #fff; color: #16337a; }
-  .aichat { display: none; margin-top: 10px; border: 1px solid #c9d4e5; border-radius: 10px;
-            background: #f7fafd; padding: 10px; }
-  .aichat.open { display: block; }
-  .ailog { max-height: 240px; overflow-y: auto; margin-bottom: 8px; font-size: .9em; }
-  .ailog .u { margin: 6px 0; text-align: right; }
-  .ailog .u span { display: inline-block; background: #16337a; color: #fff;
-                   padding: 6px 10px; border-radius: 12px 12px 4px 12px; max-width: 92%; text-align: left; }
-  .ailog .a { margin: 6px 0; }
-  .ailog .a span { display: inline-block; background: #e9eef7; color: #1f2a37;
-                   padding: 6px 10px; border-radius: 12px 12px 12px 4px; max-width: 92%; }
-  .ailog .a .airead { margin-left: 6px; border: none; background: none; cursor: pointer; font-size: 1em; }
-  .airow { display: flex; gap: 6px; }
-  .airow input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 8px;
-                 border: 1px solid #b9c6d6; font-size: .9em; }
+    # The wiki's ?page=PAT: articles fetch patent records by byte range via
+    # data/patents.idx.json.gz — rebuild it AFTER patents.jsonl was rewritten,
+    # or the offsets go stale. (The drip cron also runs build_patent_index.py,
+    # but it runs BEFORE this builder; this keeps the pair consistent always.)
+    import build_patent_index
+    build_patent_index.main()
 
-  .jahnet { background:#0d2149; color:#a9b8d4; font-size:.78em; padding:7px 12px; text-align:center; line-height:2; }
-  .jahnet-t { color:#e8c766; font-weight:700; letter-spacing:.25em; margin-right:10px; }
-  .jahnet a { color:#9fc2ff; text-decoration:none; margin:0 7px; white-space:nowrap; }
-  .jahnet a:hover { text-decoration:underline; }
-</style>
-</head>
-<body>
-<div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
-<a href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">Globally Rejustered Patent Catalog</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/">Signature Spec Catalog Pending Patents</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">The Signature Dictionary</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">JAH-N Wiki</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Signature Universal Paradox Immune Calculator</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Telephone Book</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-computer-systems/">The Signature PC System Depository</a>
-</div>
-<header>
-  <div class="seal">&#167;</div>
-  <p class="eyebrow">PUBLIC RECORDS INDEX</p>
-  <h1>Globally Rejustered Patent Catalog</h1>
-  <p class="sub">A comprehensive public index of published patent records &mdash;
-  every field of invention, from software to medicine to engineering &mdash; fully searchable.</p>
-  <div class="stats">
-    <span class="chip"><b>__COUNT__</b> patents</span>
-    <span class="chip"><b>__AREAS_N__</b> technology areas</span>
-    <span class="chip">Updated <b>__DATE__</b></span>
-  </div>
-</header>
-<div class="searchwrap">
-  <div class="searchrow">
-    <input id="q" type="search" placeholder="Search by name, keyword, company, inventor, or patent number&hellip;" autocomplete="off">
-    <button id="go" type="button">Search</button>
-  </div>
-  <div class="filters" id="filters"></div>
-  <div class="sortrow">Sort:
-    <select id="sort">
-      <option value="az">A to Z</option>
-      <option value="new">Newest first</option>
-      <option value="old">Oldest first</option>
-    </select>
-  </div>
-</div>
-<nav id="letters" aria-label="Jump by letter"></nav>
-<noscript><div class="noscript">This catalog needs JavaScript turned on to search and list patents.</div></noscript>
-<p id="count"></p>
-<div id="results"></div>
-<button id="more" type="button" style="display:none">Show more</button>
-<button id="totop" type="button" title="Back to top">&#8593;</button>
-<footer>
-  <div class="fname">Globally Rejustered Patent Catalog</div>
-  <p>An independent index of publicly available patent records, cataloged for compatibility
-  and certification purposes. All patents remain the property of their respective owners.<br>
-  Full patent texts open on Google Patents. This catalog is not affiliated with the USPTO
-  or any government agency.</p>
-</footer>
-<script>
-var DATA = __DATA__;
-var CLASS_NAMES = __CLASSES__;
-var AREAS = __AREAS__;
-var LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
-var state = { q: "", cpc: "", sort: "az", shown: 40 };
-var filtered = [];
+    build_sitemaps(enriched)
+    refresh_api(len(enriched), today)
 
-function hay(r) {
-  return (r[0] + " " + r[1] + " " + r[2] + " " + r[3] + " " + r[4]).toLowerCase();
-}
-function esc(s) {
-  return String(s == null ? "" : s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-function apply() {
-  var q = state.q.toLowerCase().trim();
-  filtered = DATA.filter(function (r) {
-    if (state.cpc && r[8] !== state.cpc) return false;
-    if (q && hay(r).indexOf(q) < 0) return false;
-    return true;
-  });
-  if (state.sort === "new" || state.sort === "old") {
-    filtered.sort(function (a, b) {
-      var da = a[7] || "", db = b[7] || "";
-      if (da === db) return a[1].toLowerCase() < b[1].toLowerCase() ? -1 : 1;
-      if (state.sort === "new") return db < da ? -1 : 1;
-      return da < db ? -1 : 1;
-    });
-  }
-  state.shown = 40;
-  render();
-}
-function card(r, i) {
-  var num = esc(r[0]), title = esc(r[1]), abs = esc(r[2]);
-  var assignee = (r[3] || "").trim(), inventor = (r[4] || "").trim();
-  var dates = [["Filed", r[5]], ["Published", r[7]], ["Granted", r[6]]]
-    .filter(function (d) { return d[1]; })
-    .map(function (d) { return d[0] + " " + esc(d[1]); }).join(" · ");
-  var cls = esc((CLASS_NAMES[r[8]] || r[8]) + (r[8] ? " (" + r[8] + ")" : ""));
-  var link = "https://patents.google.com/patent/" + encodeURIComponent(r[0]) + "/";
-  return '<div class="card" id="p' + i + '" data-letter="' + r[9] + '">' +
-    '<div class="num">' + num + '</div><h3>' + title + '</h3>' +
-    '<div class="meta">' +
-    (assignee ? "Owner: " + esc(assignee) + "<br>" : "") +
-    (inventor ? "Inventor: " + esc(inventor) + "<br>" : "") +
-    (dates ? dates : "") + '</div><div><span class="tag">' + cls + "</span></div>" +
-    (abs ? '<div class="abs">' + abs + "</div>" +
-      '<button class="toggle" type="button">Show abstract</button><br>' : "") +
-    '<a class="full" href="' + link + '" target="_blank" rel="noopener">View full patent text &#8594;</a>' +
-    '<div class="ptools">' +
-    '<button class="pbtn readbtn" type="button" data-i="' + i + '">&#128266; Read aloud</button>' +
-    '<button class="pbtn ghost aibtn" type="button" data-i="' + i + '">&#128172; Ask the AI</button>' +
-    '<button class="pbtn ghost copybtn" type="button" data-i="' + i + '">&#10697; Copy</button>' +
-    '<button class="pbtn ghost dlbtn" type="button" data-i="' + i + '">&#8681; Download</button>' +
-    '</div>' +
-    '<div class="aichat"><div class="ailog"></div>' +
-    '<div class="airow"><input type="text" class="aiinput" placeholder="Ask about this patent&hellip;" aria-label="Ask the AI about this patent">' +
-    '<button class="pbtn aisend" type="button" data-i="' + i + '">Send</button></div></div>' +
-    "</div>";
-}
-function renderLetters() {
-  var nav = document.getElementById("letters");
-  var present = {};
-  filtered.forEach(function (r) { present[r[9]] = true; });
-  var h = '<button type="button" class="top" data-l="^" title="Back to top">&#8593;</button>';
-  h += LETTERS.map(function (L) {
-    return '<button type="button" data-l="' + L + '"' +
-      (present[L] ? "" : " disabled") + ">" + L + "</button>";
-  }).join("");
-  nav.innerHTML = h;
-}
-function render() {
-  renderLetters();
-  var box = document.getElementById("results");
-  var slice = filtered.slice(0, state.shown);
-  box.innerHTML = slice.map(card).join("");
-  var label = filtered.length.toLocaleString() + " of " + DATA.length.toLocaleString() + " patents";
-  if (state.q.trim()) label += ' &mdash; results for &ldquo;' + esc(state.q.trim()) + "&rdquo;";
-  document.getElementById("count").innerHTML = label;
-  document.getElementById("more").style.display =
-    state.shown < filtered.length ? "block" : "none";
-}
-function jumpToLetter(L) {
-  if (L === "^") { window.scrollTo(0, 0); return; }
-  var idx = -1;
-  for (var i = 0; i < filtered.length; i++) {
-    if (filtered[i][9] === L) { idx = i; break; }
-  }
-  if (idx < 0) return;
-  if (idx >= state.shown) { state.shown = idx + 1; render(); }
-  var el = document.getElementById("p" + idx);
-  if (el && el.scrollIntoView) el.scrollIntoView(true);
-  var cards = document.querySelectorAll("#results .card.hit");
-  for (var j = 0; j < cards.length; j++) cards[j].classList.remove("hit");
-  if (el) {
-    el.style.borderColor = "#2563eb";
-    setTimeout(function () { el.style.borderColor = ""; }, 1600);
-  }
-}
-(function init() {
-  var f = document.getElementById("filters");
-  var btns = [{ c: "", n: "All areas" }].concat(
-    AREAS.map(function (c) { return { c: c, n: CLASS_NAMES[c] || c }; }));
-  btns.forEach(function (b) {
-    var el = document.createElement("button");
-    el.type = "button";
-    el.textContent = b.n;
-    if (!b.c) el.classList.add("active");
-    el.onclick = function () {
-      state.cpc = b.c;
-      for (var k = 0; k < f.children.length; k++) f.children[k].classList.remove("active");
-      el.classList.add("active");
-      apply();
-    };
-    f.appendChild(el);
-  });
-  var input = document.getElementById("q"), t;
-  function doSearch() { state.q = input.value; apply(); }
-  document.getElementById("go").onclick = doSearch;
-  input.addEventListener("input", function () {
-    clearTimeout(t);
-    t = setTimeout(doSearch, 200);
-  });
-  input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") { e.preventDefault(); doSearch(); }
-  });
-  document.getElementById("more").onclick = function () { state.shown += 60; render(); };
-  document.getElementById("sort").onchange = function (e) {
-    state.sort = e.target.value;
-    apply();
-  };
-  var totop = document.getElementById("totop");
-  totop.onclick = function () { window.scrollTo(0, 0); };
-  window.addEventListener("scroll", function () {
-    totop.style.display = window.scrollY > 600 ? "block" : "none";
-  });
-  document.getElementById("letters").addEventListener("click", function (e) {
-    var b = e.target.closest ? e.target.closest("button[data-l]") : null;
-    if (!b || b.disabled) return;
-    jumpToLetter(b.getAttribute("data-l"));
-  });
-  /* ---- per-patent read-aloud (tiered: built-in voice, else online voice hosts) ---- */
-  var readingBtn = null;
-  function hasSpeech2(){ try { return ("speechSynthesis" in window) && !!window.speechSynthesis && typeof window.speechSynthesis.speak === "function"; } catch(e){ return false; } }
-  try { if (hasSpeech2()) { window.speechSynthesis.getVoices(); } } catch(e){}
-  function pickVoice2(){ try { var vs = window.speechSynthesis.getVoices() || [];
-    for (var i=0;i<vs.length;i++){ var n=((vs[i].name||"")+" "+(vs[i].lang||"")).toLowerCase();
-      if ((vs[i].lang||"").toLowerCase().indexOf("en")===0 && /female|samantha|zira|google us english|aria|jenny|karen|moira|tessa|veena|fiona|hazel/.test(n)) return vs[i]; }
-    for (i=0;i<vs.length;i++){ if ((vs[i].lang||"").toLowerCase().indexOf("en")===0) return vs[i]; }
-  } catch(e){} return null; }
-  var TTS_TIERS2 = [
-    function(t){ return "https://code.responsivevoice.org/getvoice.php?t="+encodeURIComponent(t)+"&tl=en-US"; },
-    function(t){ return "https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q="+encodeURIComponent(t); },
-    function(t){ return "https://translate.googleapis.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q="+encodeURIComponent(t); }];
-  function fxChunks2(text){ var out=[], cur="", parts=String(text).split(/([.!?]["']?(?:\\s+|$))/);
-    function pushWords(s){ var w=s.split(" "), c=""; for (var k=0;k<w.length;k++){ var t=(c+" "+w[k]).trim();
-      if (t.length>180){ if (c) out.push(c); c=w[k]; } else c=t; } if (c) out.push(c); }
-    for (var i=0;i<parts.length;i+=2){ var s=((parts[i]||"")+(parts[i+1]||"")).replace(/\\s+/g," ").trim(); if(!s) continue;
-      if (s.length>180){ if(cur){out.push(cur);cur="";} pushWords(s); continue; }
-      if (cur && (cur+" "+s).length>180){ out.push(cur); cur=s; } else cur=cur?cur+" "+s:s; }
-    if (cur) out.push(cur); return out; }
-  var FX2 = { audio: null, active: false };
-  function fxPlay2(list, i, tier, retry, done){
-    if (!FX2.active) return;
-    if (i>=list.length){ FX2.active=false; if(done)done(); return; }
-    var a; try { a = new Audio(TTS_TIERS2[tier](list[i])); } catch(e){ if(done)done(); return; }
-    FX2.audio = a;
-    a.onended = function(){ if (FX2.active){ fxPlay2(list, i+1, tier, 0, done); } };
-    a.onerror = function(){ if (!FX2.active) return;
-      if (retry<1){ fxPlay2(list, i, tier, retry+1, done); return; }
-      if (tier+1<TTS_TIERS2.length){ fxPlay2(list, i, tier+1, 0, done); return; }
-      FX2.active=false; if(done)done(); };
-    try { var pr=a.play(); if (pr&&pr.catch) pr.catch(function(){}); } catch(e){}
-  }
-  function stopAudio2(){
-    try { if (hasSpeech2()) window.speechSynthesis.cancel(); } catch(e){}
-    FX2.active=false;
-    if (FX2.audio){ try { FX2.audio.pause(); } catch(e){} FX2.audio=null; }
-    if (readingBtn){ readingBtn.innerHTML="\\uD83D\\uDD0A Read aloud"; readingBtn=null; }
-  }
-  function readText2(text, btn, done){
-    stopAudio2();
-    if (!text || !text.trim()){ if(done)done(); return; }
-    readingBtn = btn; if (btn) btn.innerHTML="\u23F9 Stop";
-    var fin = function(){ if(done)done(); };
-    if (hasSpeech2()){
-      try { window.speechSynthesis.cancel(); } catch(e){}
-      var chunks = fxChunks2(text), vi = 0, v = pickVoice2();
-      (function next(){
-        if (vi>=chunks.length){ stopAudio2(); fin(); return; }
-        var u = new SpeechSynthesisUtterance(chunks[vi]);
-        u.rate=1; u.lang="en-US"; if (v) u.voice=v;
-        u.onend = function(){ vi++; next(); };
-        u.onerror = function(){ vi++; next(); };
-        window.speechSynthesis.speak(u);
-      })();
-    } else {
-      FX2.active=true;
-      fxPlay2(fxChunks2(text), 0, 0, 0, function(){ stopAudio2(); fin(); });
-    }
-  }
-  function patentText(r){
-    var parts = ["Patent " + r[0] + ".", r[1] + "."];
-    if ((r[3]||"").trim()) parts.push("Owner: " + r[3].trim() + ".");
-    if ((r[4]||"").trim()) parts.push("Inventor: " + r[4].trim() + ".");
-    if (r[5]) parts.push("Filed " + r[5] + ".");
-    if (r[7]) parts.push("Published " + r[7] + ".");
-    if (r[6]) parts.push("Granted " + r[6] + ".");
-    parts.push("Field: " + (CLASS_NAMES[r[8]] || r[8] || "general invention") + ".");
-    if ((r[2]||"").trim()) parts.push("Abstract: " + r[2].trim());
-    return parts.join(" ");
-  }
-  /* ---- per-patent personal AI (answers from this catalog record only) ---- */
-  var AIREPLIES = [];
-  function firstSentences(s, n){
-    var m = String(s).match(/[^.!?]+[.!?]+/g) || [String(s)];
-    return m.slice(0, n).join(" ").trim();
-  }
-  function linkify(s){
-    return esc(s).replace(/(https?:\\/\\/[^\\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-  }
-  function patentAI(r, q){
-    var num=r[0], title=r[1], abs=(r[2]||"").trim(), owner=(r[3]||"").trim(), inv=(r[4]||"").trim();
-    var filed=r[5]||"", pub=r[7]||"", grant=r[6]||"";
-    var cls = (CLASS_NAMES[r[8]] || r[8] || "general invention") + (r[8] ? " (" + r[8] + ")" : "");
-    var link = "https://patents.google.com/patent/" + encodeURIComponent(num) + "/";
-    var t = " " + String(q).toLowerCase() + " ";
-    function has(){ for (var i=0;i<arguments.length;i++) if (t.indexOf(arguments[i])>=0) return true; return false; }
-    if (has("hello"," hi "," hey ","good morning","good afternoon","good evening"))
-      return "Hello! I'm the personal AI for patent " + num + ". Ask me who invented it, who owns it, what it's about, or its filing and grant dates \u2014 I answer from this catalog's record.";
-    if (has("inventor","who invented","who made","who created","invented by","who designed"))
-      return inv ? ("The listed inventor is " + inv + ".") : "This record doesn't name an inventor.";
-    if (has("owner","who owns","owned by","company","assignee","who holds","holder"))
-      return owner ? ("The listed owner (assignee) is " + owner + ".") : "This record doesn't name an owner.";
-    if (has("grant","when granted","granted on","issue date","issued"))
-      return grant ? ("It was granted on " + grant + ".") : "This record shows no grant date.";
-    if (has("filed","filing","when filed","file date","application date","applied"))
-      return filed ? ("It was filed on " + filed + ".") : "This record shows no filing date.";
-    if (has("publish","when published","publication date"))
-      return pub ? ("It was published on " + pub + ".") : "This record shows no publication date.";
-    if (has("field","category","class","cpc","what area","what kind","sector"))
-      return "It's classed under " + cls + ".";
-    if (has("number","patent no","patent number","publication no"))
-      return "The publication number is " + num + ".";
-    if (has("simple","eli5","plain","easy","simple terms","like i'm five","like i am five","explain simply","dumb it down"))
-      return "In simple terms: " + title.charAt(0).toLowerCase() + title.slice(1) + ". " + (abs ? firstSentences(abs, 2) : "");
-    if (has("link","full text","full patent","read more","more detail","google patent","official"))
-      return "You can read the full official patent text here: " + link;
-    if (has("what is","summar","about","explain","describe","tell me","overview","mean","what does"))
-      return title + ". " + (abs ? firstSentences(abs, 3) : "No abstract is listed for this record.");
-    if (has("thank"))
-      return "You're welcome! Anything else about patent " + num + "?";
-    if (has("bye","goodbye"))
-      return "Goodbye! I'll be right here on patent " + num + " whenever you need me.";
-    return "I can tell you about this patent \u2014 try: who invented it, who owns it, what it's about (or \u2018explain simply\u2019), its field, or its filing and grant dates.";
-  }
-  function aiBubble(log, who, text){
-    var k = -1, div = document.createElement("div");
-    div.className = who;
-    if (who === "a"){ k = AIREPLIES.length; AIREPLIES.push(text);
-      div.innerHTML = "<span>" + linkify(text) + "</span>" +
-        '<button class="airead" type="button" data-k="' + k + '" title="Read this answer aloud">\\uD83D\\uDD0A</button>';
-    } else {
-      div.innerHTML = "<span>" + esc(text) + "</span>";
-    }
-    log.appendChild(div); log.scrollTop = log.scrollHeight;
-  }
 
-  function patentFileText(r){
-    var L = [];
-    L.push("THE CATALOG OF PUBLIC PATENTS");
-    L.push("Patent: " + r[0]);
-    L.push("Title: " + r[1]);
-    if ((r[3]||"").trim()) L.push("Owner: " + r[3].trim());
-    if ((r[4]||"").trim()) L.push("Inventor: " + r[4].trim());
-    if (r[5]) L.push("Filed: " + r[5]);
-    if (r[7]) L.push("Published: " + r[7]);
-    if (r[6]) L.push("Granted: " + r[6]);
-    L.push("Field: " + (CLASS_NAMES[r[8]] || r[8] || "general invention") + (r[8] ? " (" + r[8] + ")" : ""));
-    L.push("Full text: https://patents.google.com/patent/" + encodeURIComponent(r[0]) + "/");
-    if ((r[2]||"").trim()) L.push("", "Abstract:", r[2].trim());
-    return L.join("\\n");
-  }
-  function downloadFile2(name, content){
-    var b = new Blob([content], {type: "text/plain"});
-    var u = URL.createObjectURL(b), a = document.createElement("a");
-    a.href = u; a.download = name; document.body.appendChild(a); a.click();
-    setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); }, 800);
-  }
-  function copyText2(t, btn){
-    function done(){ if (btn){ var o = btn.innerHTML; btn.innerHTML = "Copied!"; setTimeout(function(){ btn.innerHTML = o; }, 1400); } }
-    function fallback(){
-      var ta = document.createElement("textarea"); ta.value = t;
-      document.body.appendChild(ta); ta.select();
-      try { document.execCommand("copy"); done(); } catch(e){}
-      ta.remove();
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(t).then(done, fallback);
-    } else fallback();
-  }
-  document.getElementById("results").addEventListener("click", function (e) {
-    var rb = e.target.closest ? e.target.closest(".readbtn") : null;
-    if (rb){
-      var ri = +rb.getAttribute("data-i");
-      if (readingBtn === rb){ stopAudio2(); return; }
-      readText2(patentText(filtered[ri]), rb);
-      return;
-    }
-    var abtn = e.target.closest ? e.target.closest(".aibtn") : null;
-    if (abtn){
-      var card = abtn.closest(".card"), chat = card.querySelector(".aichat");
-      var log = chat.querySelector(".ailog");
-      chat.classList.toggle("open");
-      if (chat.classList.contains("open") && !log.children.length){
-        aiBubble(log, "a", patentAI(filtered[+abtn.getAttribute("data-i")], "hello"));
-      }
-      return;
-    }
-    var sd = e.target.closest ? e.target.closest(".aisend") : null;
-    if (sd){
-      var card2 = sd.closest(".card"), chat2 = card2.querySelector(".aichat");
-      var log2 = chat2.querySelector(".ailog"), inp = chat2.querySelector(".aiinput");
-      var q = (inp.value || "").trim();
-      if (!q) return;
-      inp.value = "";
-      aiBubble(log2, "u", q);
-      aiBubble(log2, "a", patentAI(filtered[+sd.getAttribute("data-i")], q));
-      return;
-    }
-    var ar = e.target.closest ? e.target.closest(".airead") : null;
-    if (ar){
-      readText2(AIREPLIES[+ar.getAttribute("data-k")] || "", null);
-      return;
-    }
-    var cb = e.target.closest ? e.target.closest(".copybtn") : null;
-    if (cb){
-      copyText2(patentFileText(filtered[+cb.getAttribute("data-i")]), cb);
-      return;
-    }
-    var db = e.target.closest ? e.target.closest(".dlbtn") : null;
-    if (db){
-      var r2 = filtered[+db.getAttribute("data-i")];
-      downloadFile2("patent-" + String(r2[0]).replace(/[^A-Za-z0-9]+/g, "_") + ".txt", patentFileText(r2));
-      return;
-    }
-    var b = e.target.closest ? e.target.closest(".toggle") : null;
-    if (!b) return;
-    var c = b.parentElement;
-    c.classList.toggle("open");
-    b.textContent = c.classList.contains("open") ? "Hide abstract" : "Show abstract";
-  });
-  document.getElementById("results").addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && e.target && e.target.classList && e.target.classList.contains("aiinput")){
-      var card = e.target.closest(".card"), btn = card.querySelector(".aisend");
-      if (btn) btn.click();
-    }
-  });
-  /* ---- ?patent= deep link (invisible): jump straight to a patent record ---- */
-  var deepLinked = false;
-  try {
-    var pnum = new URLSearchParams(window.location.search).get("patent");
-    if (pnum && String(pnum).trim()) {
-      pnum = String(pnum).trim();
-      state.q = pnum;
-      var pq = document.getElementById("q");
-      if (pq) pq.value = pnum;
-      apply();
-      var pU = pnum.toUpperCase(), ti = -1, pk;
-      for (pk = 0; pk < filtered.length; pk++) {
-        if (String(filtered[pk][0]).toUpperCase() === pU) { ti = pk; break; }
-      }
-      if (ti >= 0) {
-        if (ti >= state.shown) { state.shown = ti + 1; render(); }
-        var pel = document.getElementById("p" + ti);
-        if (pel) {
-          pel.scrollIntoView(true);
-          pel.style.borderColor = "#2563eb";
-          setTimeout(function () { pel.style.borderColor = ""; }, 1600);
-        }
-        deepLinked = true;
-      }
-    }
-  } catch (e) {}
-  if (!deepLinked) apply();
-})();
-</script>
-</body>
-</html>
-"""
+def build_sitemaps(enriched):
+    SITE = "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/"
+    CHUNK = 40000
+    import glob as _glob
+    files = []
+    pubs = [e["pub"] for e in enriched]
+    for n, start in enumerate(range(0, len(pubs), CHUNK), 1):
+        lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+        for p in pubs[start:start + CHUNK]:
+            lines.append('  <url><loc>%s?patent=%s</loc><changefreq>monthly</changefreq></url>' %
+                         (SITE, urllib.parse.quote(p, safe="")))
+        lines.append('</urlset>')
+        fname = "sitemap-records-%d.xml" % n
+        with open(os.path.join(ROOT, fname), "w", encoding="utf-8") as fh:
+            fh.write("\n".join(lines) + "\n")
+        files.append(fname)
+    for stale in _glob.glob(os.path.join(ROOT, "sitemap-records-*.xml")):
+        if os.path.basename(stale) not in files:
+            os.remove(stale)
+    ilines = ['<?xml version="1.0" encoding="UTF-8"?>',
+              '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+              '  <sitemap><loc>%ssitemap.xml</loc></sitemap>' % SITE]
+    for fname in files:
+        ilines.append('  <sitemap><loc>%s%s</loc></sitemap>' % (SITE, fname))
+    ilines.append('</sitemapindex>')
+    with open(os.path.join(ROOT, "sitemap-index.xml"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(ilines) + "\n")
+    print("sitemaps: %d file(s), %d urls" % (len(files), len(pubs)))
 
-html = html.replace("__DATA__", data_json).replace("__CLASSES__", class_json)
-html = html.replace("__AREAS__", areas_json)
-html = html.replace("__COUNT__", f"{len(records):,}")
-html = html.replace("__AREAS_N__", f"{len(areas):,}")
-html = html.replace("__DATE__", date.today().isoformat())
-with open(DST, "w", encoding="utf-8") as fh:
-    fh.write(html)
-with open(DST2, "w", encoding="utf-8") as fh:
-    fh.write(html)
-print(f"wrote {DST} + catalog.html with {len(records)} patents ({os.path.getsize(DST)/1024:.0f} KB)")
 
-# ---- per-record sitemap (invisible plumbing: keeps Google findability fresh) ----
-SITE = "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/"
-CHUNK = 40000  # well under the 50k sitemap limit
-sitemap_files = []
-for n, start in enumerate(range(0, len(records), CHUNK), 1):
-    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
-             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for r in records[start:start + CHUNK]:
-        loc = SITE + "?patent=" + urllib.parse.quote(r[0], safe="")
-        lines.append(f'  <url><loc>{loc}</loc><changefreq>monthly</changefreq></url>')
-    lines.append('</urlset>')
-    fname = f"sitemap-records-{n}.xml"
-    with open(os.path.join(ROOT, fname), "w", encoding="utf-8") as fh:
-        fh.write("\n".join(lines) + "\n")
-    sitemap_files.append(fname)
-# drop stale extra shard files from earlier runs
-import glob as _glob
-for stale in _glob.glob(os.path.join(ROOT, "sitemap-records-*.xml")):
-    if os.path.basename(stale) not in sitemap_files:
-        os.remove(stale)
-ilines = ['<?xml version="1.0" encoding="UTF-8"?>',
-          '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-          f'  <sitemap><loc>{SITE}sitemap.xml</loc></sitemap>']
-for fname in sitemap_files:
-    ilines.append(f'  <sitemap><loc>{SITE}{fname}</loc></sitemap>')
-ilines.append('</sitemapindex>')
-with open(os.path.join(ROOT, "sitemap-index.xml"), "w", encoding="utf-8") as fh:
-    fh.write("\n".join(ilines) + "\n")
-print(f"wrote {len(sitemap_files)} sitemap-records file(s), {len(records)} urls")
-# ---- api.json count refresh (byte-preserving: only the two count fields) ----
-api_path = os.path.join(ROOT, "api.json")
-try:
-    api_txt = open(api_path, encoding="utf-8").read()
-    api_txt = re.sub(r'"records_approx":\s*\d+',
-                     f'"records_approx": {len(records)}', api_txt)
-    api_txt = re.sub(r'"records_as_of":\s*"[^"]*"',
-                     f'"records_as_of": "{date.today().isoformat()}"', api_txt)
-    open(api_path, "w", encoding="utf-8").write(api_txt)
-    print("refreshed api.json counts")
-except FileNotFoundError:
-    pass
+def refresh_api(count, today):
+    api_path = os.path.join(ROOT, "api.json")
+    try:
+        txt = open(api_path, encoding="utf-8").read()
+        txt = re.sub(r'"records_approx":\s*\d+', '"records_approx": %d' % count, txt)
+        txt = re.sub(r'"records_as_of":\s*"[^"]*"', '"records_as_of": "%s"' % today, txt)
+        open(api_path, "w", encoding="utf-8").write(txt)
+        print("refreshed api.json counts")
+    except FileNotFoundError:
+        pass
+
+
+if __name__ == "__main__":
+    main()
