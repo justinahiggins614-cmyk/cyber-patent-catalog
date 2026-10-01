@@ -8,6 +8,17 @@
   "A": 34105,
   "H": 1474
  },
+ "areas_covered": 8,
+ "classes_covered": [
+  "A01",
+  "A21",
+  "A22",
+  "A23",
+  "A24",
+  "A41",
+  "H04L63",
+  "H04L9"
+ ],
  "dupes_flagged": 1,
  "quarantined": 1
 }

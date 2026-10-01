@@ -105,6 +105,7 @@ def main():
         country, number, kind = parse_number(pub)
         canon = canonical_id(pub)
         rtype = record_type(kind, g("grant_date"))
+        rehash = hashlib.sha256((canon + "|" + title).encode("utf-8")).hexdigest()[:12]
         flags = []
         if not title:
             flags.append("missing-title")
@@ -132,7 +133,7 @@ def main():
             "language": g("language") or "en", "cpc": g("cpc"),
             "country": country, "number": number, "kind": kind,
             "canon": canon, "family": (country + number).upper(),
-            "rtype": rtype, "flags": flags,
+            "rtype": rtype, "flags": flags, "rehash": rehash,
             "off": off, "len": ln,
         })
 
@@ -146,7 +147,7 @@ def main():
             e["pub"], e["title"], e["abstract"][:400], e["inventor"], e["assignee"],
             e["cpc"], e["publication_date"], e["off"], e["len"], e["jah"],
             e["rtype"], e["family"], e["country"], e["kind"], letter_of(e["title"]),
-            1 if e["flags"] else 0,
+            1 if e["flags"] else 0, e["rehash"],
         ])
     rows.sort(key=lambda r: r[1].lower())
     with gzip.open(SEARCH_DST, "wt", encoding="utf-8") as gz:
@@ -159,9 +160,13 @@ def main():
     for e in enriched:
         h.update((e["canon"] + "|" + e["title"]).encode("utf-8"))
     sections = {}
+    classes_covered = set()
     for e in enriched:
         s = (e["cpc"] or "?")[:1]
         sections[s] = sections.get(s, 0) + 1
+        if e["cpc"]:
+            classes_covered.add(e["cpc"])
+    classes_covered = sorted(classes_covered)
     meta = {
         "catalog_version": "GRPC-" + today.replace("-", ""),
         "record_count": len(enriched),
@@ -169,6 +174,8 @@ def main():
         "source_snapshot": "Google Patents harvest, all CPC A-H, 1976-2026",
         "catalog_hash": "sha256:" + h.hexdigest(),
         "sections": sections,
+        "areas_covered": len(classes_covered),
+        "classes_covered": classes_covered,
         "dupes_flagged": dupes,
         "quarantined": quarantined,
     }

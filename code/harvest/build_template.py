@@ -1,6 +1,11 @@
 import json
 
 
+def esc_html(s):
+    return (str(s).replace("&", "&amp;").replace("<", "&lt;")
+               .replace(">", "&gt;").replace('"', "&quot;"))
+
+
 CLASS_NAMES = {
     "A01": "Agriculture & forestry", "A21": "Baking", "A22": "Butchery & meat",
     "A23": "Foods & foodstuffs", "A24": "Tobacco", "A41": "Clothing",
@@ -73,6 +78,23 @@ def build_html(meta):
             '<button type="button" class="secbtn" data-s="%s">%s · %s'
             '<span class="seccount">%s</span></button>' % (s, s, SECTION_NAMES[s], f"{n:,}"))
     sec_html = "".join(sec_buttons)
+
+    # classification counts always derive from actual records, never the name map
+    areas_covered = meta.get("areas_covered", len(CLASS_NAMES))
+    cov_classes = meta.get("classes_covered", [])
+    cov_list = ", ".join(
+        "%s (%s)" % (c, CLASS_NAMES.get(c, c)) for c in cov_classes)
+    coverage_note = (
+        "Coverage is live and growing: the harvester works through the CPC "
+        "classification (sections A&ndash;H) in order, so sections showing records "
+        "have been harvested so far, while sections at 0 are queued and fill in "
+        "as the harvest reaches them. "
+        + ("Classes harvested so far: " + esc_html(cov_list) + ". " if cov_list else "")
+        + "A &ldquo;patent record&rdquo; here is the public publication record "
+        "&mdash; number, title, abstract, owner, inventor, dates and classification "
+        "&mdash; harvested from Google Patents. Nothing is invented: every record "
+        "is a real harvested public record."
+    )
 
     html = """<!DOCTYPE html>
 <html lang="en">
@@ -151,6 +173,8 @@ def build_html(meta):
   #letters button.top { background: #dbe4f5; }
   #count { text-align: center; color: #5b6b7f; margin: 12px 0 0; font-size: .92em;
            padding: 0 16px; }
+  .coveragenote { max-width: 860px; margin: 10px auto 0; padding: 0 16px; text-align: center;
+           color: #5b6b7f; font-size: .82em; line-height: 1.6; }
   #results { max-width: 860px; margin: 0 auto; padding: 12px 16px 60px; }
   .card { background: #fff; border: 1px solid #d3dce6; border-left: 4px solid #c9a227;
           border-radius: 8px; padding: 14px 16px; margin: 10px 0;
@@ -258,6 +282,7 @@ def build_html(meta):
     <div class="gtitle">BROWSE BY GROUP</div>
     <div class="secbtns" id="secbtns">__SECTIONS__</div>
   </div>
+  <p class="coveragenote">__COVERAGE_NOTE__</p>
   <div class="filters" id="filters"></div>
   <div class="sortrow">Sort:
     <select id="sort">
@@ -307,7 +332,7 @@ function matchRow(r, qn, q) {
   var mode = state.mode;
   if (mode === "id" || mode === "all") {
     var idh = normNum(r[0]) + " " + normNum(r[9]) + " " + normNum(r[11]) + " " +
-              normNum(r[12] + r[1]) + " " + normNum(r[1]);
+              normNum(r[12] + r[1]) + " " + normNum(r[1]) + " " + normNum(r[16] || "");
     if (qn && idh.indexOf(qn) >= 0) return true;
     if (mode === "id") return false;
   }
@@ -387,6 +412,7 @@ function recviewHTML(fr) {
   var L = [];
   function row(k, v) { if (v) L.push('<div class="rvrow"><span class="rvk">' + k + ":</span> " + esc(v) + "</div>"); }
   row("Catalog ID", fr.jah);
+  row("Record hash", fr.rehash);
   row("Publication number", fr.pub);
   row("Country", fr.country || null);
   row("Document number", fr.number || null);
@@ -407,6 +433,16 @@ function recviewHTML(fr) {
     'scientifically or commercially true. This catalog does not independently verify claims.</div>');
   if (fr.abstract) L.push('<div class="rvrow"><span class="rvk">Abstract:</span> ' + esc(fr.abstract) + "</div>");
   L.push('<div class="rvrow"><span class="rvk">Source:</span> Google Patents harvest, all CPC A–H, 1976–2026</div>');
+  L.push('<div class="rvrow"><span class="rvk">Cross-references:</span> ' +
+    '<a class="full" style="display:inline;margin-top:0" href="https://justinahiggins614-cmyk.github.io/jah-wiki/?page=PAT:' +
+    encodeURIComponent(fr.pub) + '">JAH Wiki article</a>' +
+    ' &middot; <a class="full" style="display:inline;margin-top:0" href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/?dossier=' +
+    encodeURIComponent(fr.pub) + '">JAH-N dossier</a>' +
+    ' &middot; <a class="full" style="display:inline;margin-top:0" href="https://justinahiggins614-cmyk.github.io/signature-one-archive/specs.html">Signature-line version</a></div>');
+  L.push('<div class="epistemic"><b>About the Signature-line link:</b> the Signature Spec Catalog prepares ' +
+    'an original Signature-line design, by Justin Addam Higgins, in the same product area as public patent ' +
+    'records. The public record above and any Signature original are separate things &mdash; this catalog ' +
+    'holds public records only; the Spec Catalog holds original drafts.</div>');
   L.push('<div class="rvrow"><span class="rvk">Full text:</span> <a class="full" href="https://patents.google.com/patent/' +
     encodeURIComponent(fr.pub) + '/" target="_blank" rel="noopener">View full patent text &#8594;</a></div>');
   return L.join("");
@@ -444,14 +480,14 @@ function openRecord(idx) {
   fetchFullRecord(r, function (rec) {
     var fr;
     if (rec) {
-      fr = { jah: r[9], pub: r[0], title: r[1], abstract: rec.abstract_snippet || "",
+      fr = { jah: r[9], rehash: r[16], pub: r[0], title: r[1], abstract: rec.abstract_snippet || "",
              inventor: rec.inventor || "", assignee: rec.assignee || "",
              filing_date: rec.filing_date || "", publication_date: rec.publication_date || "",
              grant_date: rec.grant_date || "", priority_date: rec.priority_date || "",
              country: r[12], number: rec.publication_number || r[0], kind: r[13],
              family: r[11], rtype: r[10], cpc: r[5] };
     } else {
-      fr = { jah: r[9], pub: r[0], title: r[1], abstract: r[2],
+      fr = { jah: r[9], rehash: r[16], pub: r[0], title: r[1], abstract: r[2],
              inventor: r[3], assignee: r[4], filing_date: "", publication_date: r[6],
              grant_date: "", priority_date: "", country: r[12], number: r[0], kind: r[13],
              family: r[11], rtype: r[10], cpc: r[5] };
@@ -668,6 +704,7 @@ function patentFileTextIdx(idx){
   var L = [];
   L.push("GLOBALLY REJUSTERED PATENT CATALOG — RECORD EXPORT");
   L.push("Catalog ID: " + r[9]);
+  if (r[16]) L.push("Record hash: " + r[16]);
   L.push("Publication number: " + r[0]);
   L.push("Country: " + (r[12] || "unknown") + " · Document: " + r[0] + " · Kind: " + (r[13] || "unknown"));
   L.push("Patent family: " + (r[11] || "unknown"));
@@ -875,7 +912,9 @@ function applyMeta() {
     .then(function (m) {
       if (m) META_BAKED = m;
       document.getElementById("chipcount").textContent = META_BAKED.record_count.toLocaleString();
-      document.getElementById("chipareas").textContent = Object.keys(CLASS_NAMES).length.toLocaleString();
+      document.getElementById("chipareas").textContent =
+        (META_BAKED.areas_covered != null ? META_BAKED.areas_covered
+                                         : Object.keys(CLASS_NAMES).length).toLocaleString();
       document.getElementById("chipdate").textContent = META_BAKED.last_updated;
       document.getElementById("metaline").textContent =
         "Catalog " + META_BAKED.catalog_version + " · " +
@@ -896,9 +935,10 @@ function googleTranslateElementInit() {
 </html>
 """
     return (html.replace("__COUNT__", f"{count:,}")
-                .replace("__AREAS_N__", f"{len(CLASS_NAMES):,}")
+                .replace("__AREAS_N__", f"{areas_covered:,}")
                 .replace("__DATE__", today)
                 .replace("__SECTIONS__", sec_html)
+                .replace("__COVERAGE_NOTE__", coverage_note)
                 .replace("__CLASSES__", class_json)
                 .replace("__SECTIONS_JSON__", section_names)
                 .replace("__META__", meta_json))
