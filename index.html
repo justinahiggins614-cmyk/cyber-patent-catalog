@@ -9,6 +9,7 @@
 <script type="application/ld+json" id="catalog-ld">
 {"@context":"https://schema.org","@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents across all CPC sections A–H.","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"}]},"numberOfItems":"46,615","dateModified":"2026-10-02","isAccessibleForFree":true}
 </script>
+<script src="js/jah-talk-fallback.js"></script>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -693,12 +694,33 @@ function firstSentences(s, n){
 function linkify(s){
   return esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
 }
-function patentAI(r, q){
+/* ---- JAHtalk shared talk module: human voice + duties, stat-dump guard ----
+   The per-patent AI is a site helper (NOT a canon phone-book AI — it claims
+   no JAH-AI ID). Social/duty intents get warm human replies via
+   JAHtalk.reply; EVERY final reply is guarded against terse machine dumps. */
+function patentAIProfile(r){
+  var num=r[0]||"", title=r[1]||"";
+  var cls=(CLASS_NAMES[r[5]]||r[5]||"general invention");
+  return {name:"Personal AI for patent "+num,id:"",
+    description:"Personal AI assistant for the public patent record "+num+" ("+title+") — I answer only from this catalog's record, never inventing patent numbers or facts.",
+    abilities:["Say who invented it and who owns it","Explain what it is about in simple terms","Give its field, dates, and publication number"],
+    domain:cls,kind:"domain"};
+}
+function patentAISocial(r,q){
+  if(typeof JAHtalk==="undefined")return null;
+  var t=" "+String(q||"").toLowerCase()+" ";
+  if(/(what are your duties|what is your duty|what do you do|what can you do|your duties|your job|your role|your abilities|explain your duties|who are you|your name|introduce yourself|what are you for|how are you)/.test(t))
+    return JAHtalk.reply(patentAIProfile(r),q);
+  return null;
+}
+function patentAIraw(r, q){
   var num=r[0], title=r[1], abs=(r[2]||"").trim(), owner=(r[4]||"").trim(), inv=(r[3]||"").trim();
   var pub=r[6]||"", cls = (CLASS_NAMES[r[5]] || r[5] || "general invention") + (r[5] ? " (" + r[5] + ")" : "");
   var link = "https://patents.google.com/patent/" + encodeURIComponent(num) + "/";
   var t = " " + String(q).toLowerCase() + " ";
   function has(){ for (var i=0;i<arguments.length;i++) if (t.indexOf(arguments[i])>=0) return true; return false; }
+  var soc=patentAISocial(r,q);
+  if(soc!==null)return soc;
   if (has("hello"," hi "," hey ","good morning","good afternoon","good evening"))
     return "Hello! I'm the personal AI for patent " + num + ". Ask me who invented it, who owns it, what it's about, or its dates \u2014 I answer only from this catalog's record.";
   if (has("inventor","who invented","who made","who created","invented by","who designed"))
@@ -729,6 +751,10 @@ function patentAI(r, q){
   if (has("bye","goodbye"))
     return "Goodbye! I'll be right here on patent " + num + " whenever you need me.";
   return "I can tell you about this patent \u2014 try: who invented it, who owns it, what it's about (or \u2018explain simply\u2019), its field, or its publication date. I only answer from this record; I never invent patent numbers or facts.";
+}
+function patentAI(r,q){
+  var out=patentAIraw(r,q);
+  return (typeof JAHtalk==="undefined")?out:JAHtalk.guard(out,patentAIProfile(r));
 }
 function aiBubble(log, who, text){
   var k = -1, div = document.createElement("div");
