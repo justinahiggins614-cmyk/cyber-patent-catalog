@@ -293,6 +293,10 @@ def build_html(meta, harv=None):
 <a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/specs.html">Signature Spec Catalog Pending Patents</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-llama/">Signature Llama</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-computer-systems/">The Signature PC System Depository</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-cyber-mega-mall/">Signature Cyber Mega-Mall</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-university/">Signature University</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-books/">The Signature Book Depository</a>
+
 </div>
 <header>
   <div class="seal">&#167;</div>
