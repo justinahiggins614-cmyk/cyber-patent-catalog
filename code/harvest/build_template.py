@@ -87,6 +87,12 @@ def build_html(meta, harv=None):
     # Harvest status line: kept as its own line, visually separate from the
     # "patents / areas / updated" chips above it.
     hl = harv.get("harvest_line", "")
+    # Plain-text variant for the data/downloads section (static, crawlable).
+    hl_txt = (hl.replace('<span class="sep">·</span>', " · ")
+                .replace("<b>", "").replace("</b>", ""))
+    # Plain-text variant for the data/downloads section (static, crawlable).
+    hl_txt = (hl.replace('<span class="sep">·</span>', " · ")
+                .replace("<b>", "").replace("</b>", ""))
 
     # classification counts always derive from actual records, never the name map
     areas_covered = meta.get("areas_covered", len(CLASS_NAMES))
@@ -110,7 +116,12 @@ def build_html(meta, harv=None):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Globally Rejustered Patent Catalog</title>
+<title>Globally Rejustered Patent Catalog — searchable public patent records</title>
+<meta name="description" content="Globally Rejustered Patent Catalog: a free, searchable public index of __COUNT__ published patent records (numbers, titles, owners, inventors, dates, CPC classes) harvested from Google Patents. Not affiliated with the USPTO or any government agency.">
+<link rel="canonical" id="canon" href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">
+<script type="application/ld+json" id="catalog-ld">
+{"@context":"https://schema.org","@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents across all CPC sections A–H.","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"}]},"numberOfItems":"__COUNT__","dateModified":"__DATE__","isAccessibleForFree":true}
+</script>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -255,6 +266,19 @@ def build_html(meta, harv=None):
   .jahnet a:hover { text-decoration:underline; }
   .jahnet-here { display:block; color:#e8c766; font-weight:700; letter-spacing:.12em; font-size:1.02em; }
   .jahnet-cur { color:#e8c766; font-weight:700; margin:0 7px; white-space:nowrap; }
+  .infosection { max-width: 860px; margin: 26px auto 0; padding: 0 16px; }
+  .infosection h2 { color: #14213a; font-size: 1.25em; font-family: Georgia, serif; margin: 0 0 8px; }
+  .infosection .infocard { background: #fff; border: 1px solid #d3dce6; border-left: 4px solid #c9a227;
+          border-radius: 8px; padding: 14px 18px; line-height: 1.7; font-size: .92em; color: #33415c; }
+  .infosection .infocard dt { font-weight: 700; color: #16337a; }
+  .infosection .infocard dd { margin: 0 0 8px; }
+  .infosection .infocard a { color: #1d4ed8; font-weight: 600; }
+  .infosection .statgrid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .infosection .stat { background: #f4f7fb; border: 1px solid #c9d4e5; border-radius: 8px; padding: 6px 12px; font-size: .85em; }
+  .card h3 a { color: #14213a; text-decoration: none; }
+  .card h3 a:hover { color: #1d4ed8; text-decoration: underline; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+             overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 </style>
 </head>
 <body>
@@ -302,8 +326,8 @@ def build_html(meta, harv=None):
   </div>
   <p class="coveragenote">__COVERAGE_NOTE__</p>
   <div class="filters" id="filters"></div>
-  <div class="sortrow">Sort:
-    <select id="sort">
+  <div class="sortrow"><label for="sort">Sort:</label>
+    <select id="sort" aria-label="Sort patent results">
       <option value="az">A to Z</option>
       <option value="new">Newest first</option>
       <option value="old">Oldest first</option>
@@ -313,9 +337,62 @@ def build_html(meta, harv=None):
 <nav id="letters" aria-label="Jump by letter"></nav>
 <noscript><div class="noscript">This catalog needs JavaScript turned on to search and list patents.</div></noscript>
 <p id="count" role="status" aria-live="polite"></p>
+<h2 class="sr-only" id="resultshead">Patent records</h2>
 <div id="results"><p class="nores" id="bootmsg"><h3>Loading the catalog index&hellip;</h3></p></div>
 <button id="more" type="button" style="display:none">Show more</button>
-<button id="totop" type="button" title="Back to top">&#8593;</button>
+<button id="totop" type="button" title="Back to top" aria-label="Back to top">&#8593;</button>
+<section class="infosection" id="data" aria-label="Data and downloads">
+  <h2>Data &amp; downloads</h2>
+  <div class="infocard">
+    <p>This catalog is machine-readable as well as human-readable. The full record set is exported
+    as a plain CSV on every harvest (publication number, title, dates, owner, inventor, CPC class,
+    catalog ID and record hash), alongside the catalog metadata and the XML sitemaps.</p>
+    <p><a href="data/patents.csv" download>Download the catalog CSV</a> (__COUNT__ records) &middot;
+    <a href="data/meta.json">Catalog metadata (JSON)</a> &middot;
+    <a href="sitemap.xml">Sitemap</a> &middot;
+    <a href="sitemap-index.xml">Full sitemap index</a></p>
+    <div class="statgrid">
+      <span class="stat"><b>__COUNT__</b> patent records</span>
+      <span class="stat"><b>__AREAS_N__</b> technology areas</span>
+      <span class="stat">Updated <b>__DATE__</b></span>
+      <span class="stat">__HARVEST_LINE_TXT__</span>
+    </div>
+  </div>
+</section>
+<section class="infosection" id="methodology" aria-label="About the data and methodology">
+  <h2>About the data &amp; methodology</h2>
+  <div class="infocard">
+    <dl>
+      <dt>What a "patent record" is</dt>
+      <dd>A patent record here is the public publication record — number, title, abstract, owner,
+      inventor, dates and classification — harvested from Google Patents. Nothing is invented:
+      every record is a real harvested public record. These are <b>cataloged public records</b>,
+      not JAH-created material; original Signature designs by Justin Addam Higgins live separately
+      in the Signature Spec Catalog.</dd>
+      <dt>Source &amp; harvest cadence</dt>
+      <dd>Records are harvested from Google Patents public records on a 30-minute drip cycle.
+      Counts shown on this page are written into the page HTML at build time; live counters use
+      the same catalog metadata file as their source.</dd>
+      <dt>Coverage &amp; status meanings</dt>
+      <dd>The harvester works through the CPC classification (sections A&ndash;H) in order.
+      Section statuses: <b>Indexed</b> — records are searchable; <b>Processing</b> — the harvester
+      is currently working that class; <b>Queued</b> — the section's classes are scheduled next
+      (a section showing 0 records means "not yet harvested", never "no patents exist").</dd>
+      <dt>Identifier</dt>
+      <dd>The canonical record ID is the publication number (e.g. US10000000B2). Each record also
+      carries a permanent JAH-PAT catalog ID and a per-record SHA-256 hash of number + title for
+      independent verification.</dd>
+      <dt>Versioning</dt>
+      <dd>Every harvest writes a new catalog version (GRPC-YYYYMMDD) and a full catalog hash in
+      <a href="data/meta.json">data/meta.json</a>. Records are never trimmed to make room; growth
+      is additive and versions are comparable by hash.</dd>
+      <dt>Independence notice</dt>
+      <dd>This catalog is an independent index of publicly available patent records. It is not
+      affiliated with the USPTO or any government agency, and inclusion of a record does not
+      verify the claims in the underlying patent document.</dd>
+    </dl>
+  </div>
+</section>
 <footer>
   <div class="fname">Globally Rejustered Patent Catalog</div>
   <p>An independent index of publicly available patent records, cataloged for compatibility
@@ -399,10 +476,12 @@ function card(idx) {
     .map(function (d) { return d[0] + " " + esc(d[1]); }).join(" · ");
   var cls = esc((CLASS_NAMES[r[5]] || r[5] || "General") + (r[5] ? " (" + r[5] + ")" : ""));
   var link = "https://patents.google.com/patent/" + encodeURIComponent(r[0]) + "/";
+  var perma = "?patent=" + encodeURIComponent(r[0]);
   var quar = r[15] ? '<div><span class="tag" style="background:#fde8e8;color:#8a1f1f">Record needs review</span></div>' : "";
   var opened = state.opened[r[9]];
   var h = '<div class="card" id="p' + idx + '" data-letter="' + r[14] + '">' +
-    '<div class="num">' + num + ' &nbsp;·&nbsp; ' + esc(r[9]) + '</div><h3>' + title + '</h3>' +
+    '<div class="num">' + num + ' &nbsp;·&nbsp; ' + esc(r[9]) + '</div>' +
+    '<h3><a href="' + perma + '">' + title + "</a></h3>" +
     '<div class="meta">' +
     (assignee ? "Owner: " + esc(assignee) + "<br>" : "") +
     (inventor ? "Inventor: " + esc(inventor) + "<br>" : "") +
@@ -461,6 +540,8 @@ function recviewHTML(fr) {
     'an original Signature-line design, by Justin Addam Higgins, in the same product area as public patent ' +
     'records. The public record above and any Signature original are separate things &mdash; this catalog ' +
     'holds public records only; the Spec Catalog holds original drafts.</div>');
+  L.push('<div class="rvrow"><span class="rvk">Permalink:</span> <a class="full" style="display:inline;margin-top:0" href="?patent=' +
+    encodeURIComponent(fr.pub) + '">Catalog record ?patent=' + esc(fr.pub) + "</a></div>");
   L.push('<div class="rvrow"><span class="rvk">Full text:</span> <a class="full" href="https://patents.google.com/patent/' +
     encodeURIComponent(fr.pub) + '/" target="_blank" rel="noopener">View full patent text &#8594;</a></div>');
   return L.join("");
@@ -757,6 +838,38 @@ function copyText2(t, btn){
     navigator.clipboard.writeText(t).then(done, fallback);
   } else fallback();
 }
+/* ---- per-record machine readability: JSON-LD Patent, title, canonical ---- */
+function setRecordLD(r, pub) {
+  try {
+    var old = document.getElementById("patent-ld");
+    if (old) old.remove();
+    var obj = {
+      "@context": "https://schema.org", "@type": "Patent",
+      "name": r[1] || pub,
+      "identifier": r[0] || pub,
+      "url": "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/?patent=" +
+             encodeURIComponent(r[0] || pub),
+      "isAccessibleForFree": true
+    };
+    if (r[6]) obj.datePublished = r[6];
+    if (r[2]) obj.description = r[2];
+    if (r[3]) obj.creator = { "@type": "Person", "name": r[3] };
+    if (r[4]) obj.copyrightHolder = { "@type": "Organization", "name": r[4] };
+    if (r[9]) obj.additionalProperty = { "@type": "PropertyValue", "name": "catalog ID", "value": r[9] };
+    var sc = document.createElement("script");
+    sc.type = "application/ld+json"; sc.id = "patent-ld";
+    sc.textContent = JSON.stringify(obj);
+    document.head.appendChild(sc);
+    document.title = (r[1] || r[0] || pub) + " — " + (r[0] || pub) +
+      " | Globally Rejustered Patent Catalog";
+    var md = document.querySelector('meta[name="description"]');
+    if (md) md.setAttribute("content",
+      "Patent record " + (r[0] || pub) + ": " + (r[1] || "patent record") +
+      " — Globally Rejustered Patent Catalog, a public index of harvested patent records. Not affiliated with the USPTO.");
+    var canon = document.getElementById("canon");
+    if (canon) canon.setAttribute("href", obj.url);
+  } catch (e) {}
+}
 /* ================= init ================= */
 function renderSections() {
   var box = document.getElementById("secbtns");
@@ -892,6 +1005,7 @@ function initUI() {
       }
       if (fi >= 0) {
         if (fi >= state.shown) { state.shown = fi + 1; render(); }
+        setRecordLD(DATA[filtered[fi]], pnum);
         var pel = document.getElementById("p" + filtered[fi]);
         if (pel) {
           /* patent-number deep links go straight to the opened record */
@@ -960,6 +1074,7 @@ function googleTranslateElementInit() {
                 .replace("__AREAS_N__", f"{areas_covered:,}")
                 .replace("__DATE__", today)
                 .replace("__HARVEST_LINE__", hl)
+                .replace("__HARVEST_LINE_TXT__", esc_html(hl_txt))
                 .replace("__SECTIONS__", sec_html)
                 .replace("__COVERAGE_NOTE__", coverage_note)
                 .replace("__CLASSES__", class_json)

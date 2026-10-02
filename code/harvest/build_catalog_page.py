@@ -271,7 +271,28 @@ def main():
     build_patent_index.main()
 
     build_sitemaps(enriched)
+    build_csv(enriched)
     refresh_api(len(enriched), today)
+
+
+def build_csv(enriched):
+    """Full machine-readable export: one row per patent record."""
+    import csv
+    path = os.path.join(ROOT, "data", "patents.csv")
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["publication_number", "title", "publication_date", "filing_date",
+                    "assignee", "inventor", "cpc_classification", "record_type",
+                    "catalog_id", "record_hash", "country", "kind_code",
+                    "catalog_url"])
+        for e in enriched:
+            url = ("https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/"
+                   "?patent=" + urllib.parse.quote(e["pub"], safe=""))
+            w.writerow([e["pub"], e["title"], e["publication_date"], e["filing_date"],
+                        e["assignee"], e["inventor"], e["cpc"], e["rtype"],
+                        e["jah"], e["rehash"], e["country"], e["kind"], url])
+    print("csv: %d rows -> %s (%.1f MB)" % (
+        len(enriched), path, os.path.getsize(path) / 1048576))
 
 
 def build_sitemaps(enriched):
