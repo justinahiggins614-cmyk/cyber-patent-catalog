@@ -478,7 +478,7 @@ function recviewHTML(fr) {
   L.push('<div class="rvrow"><span class="rvk">Permalink:</span> <a class="full" style="display:inline;margin-top:0" href="?patent=' +
     encodeURIComponent(fr.pub) + '">Catalog record ?patent=' + esc(fr.pub) + "</a></div>");
   L.push('<div class="rvrow"><span class="rvk">Full text:</span> <a class="full" href="https://patents.google.com/patent/' +
-    encodeURIComponent(fr.pub) + '/">View full patent text &#8594;</a></div>');
+    encodeURIComponent(fr.pub) + '/" target="_blank" rel="noopener">View full patent text &#8594;</a></div>');
   L.push(patentHelperHTML(fr));
   return L.join("");
 }
@@ -951,18 +951,18 @@ function finderWords(sx){return String(sx==null?"":sx).toLowerCase().replace(/[^
 var RECHELPERS={};
 function patentFinderCard(idx){
   var r=DATA[idx],perma="?patent="+encodeURIComponent(r[0]);
-  var meta=(r[4]?"Owner: "+r[4]:"")+(r[4]&&r[3]?" \u00b7 ":"")+(r[3]?"Inventor: "+r[3]:"");
-  return '<a class="fcard" href="'+perma+'"><div class="fnum">'+esc(r[0])+' &nbsp;\u00b7&nbsp; '+esc(r[9]||"")+'</div>'+
-    '<h3>'+esc(r[1]||"(record title missing \u2014 under review)")+'</h3>'+
+  var meta=(r[4]?"Owner: "+r[4]:"")+(r[4]&&r[3]?" · ":"")+(r[3]?"Inventor: "+r[3]:"");
+  return '<a class="fcard" href="'+perma+'"><div class="fnum">'+esc(r[0])+' &nbsp;·&nbsp; '+esc(r[9]||"")+'</div>'+
+    '<h3>'+esc(r[1]||"(record title missing — under review)")+'</h3>'+
     (meta?'<div class="fmeta">'+esc(meta)+'</div>':"")+
-    (r[2]?'<div class="fabs">'+esc(String(r[2]).slice(0,220))+(String(r[2]).length>220?"\u2026":"")+'</div>':"")+
+    (r[2]?'<div class="fabs">'+esc(String(r[2]).slice(0,220))+(String(r[2]).length>220?"…":"")+'</div>':"")+
     '<div class="fgo">Take me there &rarr;</div></a>';
 }
 function finderRun(){
   var qi=document.getElementById("finderq"),box=document.getElementById("finderres");
   var ws=finderWords(qi.value);
-  if(!ws.length){box.innerHTML='<div class="finder-none">Describe the patent in a few plain words \u2014 e.g. "solar panel mounting bracket" \u2014 and the Finder scans the whole catalog.</div>';return;}
-  if(!DATA||!DATA.length){box.innerHTML='<div class="finder-none">Catalog index still loading \u2014 try again in a moment.</div>';return;}
+  if(!ws.length){box.innerHTML='<div class="finder-none">Describe the patent in a few plain words — e.g. "solar panel mounting bracket" — and the Finder scans the whole catalog.</div>';return;}
+  if(!DATA||!DATA.length){box.innerHTML='<div class="finder-none">Catalog index still loading — try again in a moment.</div>';return;}
   var sq=state.q,sm=state.mode,ss=state.section,sc=state.cpc;
   setMode("all");state.section="";state.cpc="";
   var scores={};
@@ -975,7 +975,7 @@ function finderRun(){
   ranked.sort(function(a,b){return b.n-a.n;});
   var top=ranked.slice(0,5);
   if(!top.length){box.innerHTML='<div class="finder-none">No patent records matched "'+esc(ws.join(" "))+'". Try fewer or different words.</div>';return;}
-  box.innerHTML='<div class="finder-count">TOP '+top.length+' MATCH'+(top.length>1?"ES":"")+' FOR \u201c'+esc(ws.join(" "))+'\u201d</div>'+
+  box.innerHTML='<div class="finder-count">TOP '+top.length+' MATCH'+(top.length>1?"ES":"")+' FOR “'+esc(ws.join(" "))+'”</div>'+
     top.map(function(e){return patentFinderCard(e.i);}).join("");
 }
 /* ================= RECORD HELPER (additive, 2026-10-02) =================
@@ -983,19 +983,19 @@ function finderRun(){
    fields; says plainly when the record does not cover a question. */
 function patentHelperHTML(fr){
   RECHELPERS[fr.pub]=fr;
-  return '<div class="rechelper"><div class="rechelper-h">\u9670 RECORD HELPER \u2014 quotes only this catalog record</div>'+
+  return '<div class="rechelper"><div class="rechelper-h">◆ RECORD HELPER — quotes only this catalog record</div>'+
    '<div class="helper-chips"><button type="button" class="hchip" data-hq="__what" data-pub="'+esc(fr.pub)+'">What is it?</button>'+
    '<button type="button" class="hchip" data-hq="__facts" data-pub="'+esc(fr.pub)+'">Key facts</button>'+
    '<button type="button" class="hchip" data-hq="__cover" data-pub="'+esc(fr.pub)+'">What this record covers</button></div>'+
    '<div class="helper-log" aria-live="polite"></div>'+
-   '<div class="helper-row"><input class="helper-input" maxlength="300" placeholder="Ask about this patent record\u2026" aria-label="Ask the record helper">'+
+   '<div class="helper-row"><input class="helper-input" maxlength="300" placeholder="Ask about this patent record…" aria-label="Ask the record helper">'+
    '<button class="helper-send" type="button" data-pub="'+esc(fr.pub)+'">Ask</button></div></div>';
 }
 function patentHelperAnswer(fr,q){
   function val(v){return String(v==null?"":v).trim();}
-  if(q==="__what")return "This is public patent record <b>"+esc(fr.pub)+"</b> \u2014 "+esc(fr.title||"(title missing)")+". "+(fr.abstract?esc(fr.abstract.slice(0,500))+(fr.abstract.length>500?"\u2026":""):"This record carries no abstract text.");
+  if(q==="__what")return "This is public patent record <b>"+esc(fr.pub)+"</b> — "+esc(fr.title||"(title missing)")+". "+(fr.abstract?esc(fr.abstract.slice(0,500))+(fr.abstract.length>500?"…":""):"This record carries no abstract text.");
   if(q==="__facts")return "<b>Key facts:</b> number <b>"+esc(fr.pub)+"</b>"+(fr.inventor?"; inventor: "+esc(fr.inventor):"")+ (fr.assignee?"; owner: "+esc(fr.assignee):"")+"; published "+esc(fr.publication_date||"date not listed")+"; field: "+esc((typeof CLASS_NAMES!=="undefined"&&CLASS_NAMES[fr.cpc])||fr.cpc||"general")+".";
-  if(q==="__cover")return "This record covers: publication number, title, abstract, inventor, owner/assignee, dates, classification, and record status. A patent record states what the applicant <b>claimed</b> \u2014 it does not prove the claims true, and it covers nothing else.";
+  if(q==="__cover")return "This record covers: publication number, title, abstract, inventor, owner/assignee, dates, classification, and record status. A patent record states what the applicant <b>claimed</b> — it does not prove the claims true, and it covers nothing else.";
   var ws=finderWords(q);
   var fields=[["Title",fr.title],["Abstract",fr.abstract],["Inventor",fr.inventor],["Owner / assignee",fr.assignee],["Publication date",fr.publication_date],["Filing date",fr.filing_date],["Grant date",fr.grant_date],["Priority date",fr.priority_date],["Classification",((typeof CLASS_NAMES!=="undefined"&&CLASS_NAMES[fr.cpc])||"")+" "+(fr.cpc||"")],["Status",fr.grant_date?("Granted "+fr.grant_date):fr.rtype],["Record type",fr.rtype],["Patent family",fr.family],["Country",fr.country],["Kind code",fr.kind]];
   var best=null,bn=0;
@@ -1003,7 +1003,7 @@ function patentHelperAnswer(fr,q){
     for(var j=0;j<ws.length;j++)if(hay.indexOf(ws[j])>=0)n++;
     if(n>bn){bn=n;best=fields[i];}}
   if(best&&bn>0)return "<b>"+esc(best[0])+":</b> "+esc(val(best[1]).slice(0,600));
-  return "<b>This record doesn\u2019t cover that.</b> The catalog only states what\u2019s in the harvested record \u2014 number, title, abstract, inventor, owner, dates, classification. Nothing is invented.";
+  return "<b>This record doesn’t cover that.</b> The catalog only states what’s in the harvested record — number, title, abstract, inventor, owner, dates, classification. Nothing is invented.";
 }
 function patentHelperAsk(btn,q){
   var wrap=btn.closest?btn.closest(".rechelper"):null;if(!wrap)return;

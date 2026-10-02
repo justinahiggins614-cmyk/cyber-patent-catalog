@@ -280,6 +280,37 @@ def build_html(meta, harv=None):
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
              overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 </style>
+<style>
+/* FINDER AI + RECORD HELPER (additive, 2026-10-02) */
+.finder{background:#fff;border:1px solid #d3dce6;border-left:4px solid #c9a227;border-radius:8px;padding:14px 16px;margin:14px 20px}
+.finder-h{color:#16337a;font-weight:700;letter-spacing:.05em;font-size:.85em;margin-bottom:10px}
+.finder-row{display:flex;gap:8px}
+#finderq{flex:1;min-width:0;padding:10px 12px;border:1px solid #b9c6d6;border-radius:8px;font-size:.95em}
+#findergo{background:#16337a;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;white-space:nowrap}
+#findergo:hover{background:#0d2149}
+.finder-res{margin-top:12px;display:grid;gap:10px}
+.finder-count{color:#16337a;font-weight:700;font-size:.82em;letter-spacing:.04em}
+.finder-none{color:#5a6b7f;font-size:.9em}
+a.fcard{display:block;background:#f7fafc;border:1px solid #d3dce6;border-radius:8px;padding:12px 14px;text-decoration:none;color:#1f2a37}
+a.fcard:hover{border-color:#16337a}
+a.fcard .fnum{font-size:.75em;color:#5a6b7f;letter-spacing:.05em}
+a.fcard h3{margin:6px 0;font-size:1.02em;color:#16337a}
+a.fcard .fmeta{font-size:.85em;color:#5a6b7f}
+a.fcard .fabs{font-size:.88em;margin-top:6px;color:#33404f}
+a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
+.rechelper{margin-top:12px;border:1px dashed #9fb2c8;border-radius:8px;padding:10px 12px;background:#f7fafc}
+.rechelper-h{color:#16337a;font-weight:700;font-size:.8em;letter-spacing:.06em;margin-bottom:8px}
+.helper-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.hchip{background:#fff;border:1px solid #9fb2c8;color:#16337a;font-size:.78em;padding:5px 10px;border-radius:14px;cursor:pointer}
+.hchip:hover{border-color:#16337a}
+.helper-log{max-height:230px;overflow:auto;margin-bottom:8px}
+.hmsg{margin:6px 0;font-size:.86em;line-height:1.5}
+.hmsg.you{color:#5a6b7f}
+.hmsg.ai{color:#1f2a37}
+.helper-row{display:flex;gap:6px}
+.helper-input{flex:1;min-width:0;padding:8px 10px;border:1px solid #b9c6d6;border-radius:8px;font-size:.9em}
+.helper-send{background:#16337a;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;white-space:nowrap}
+</style>
 </head>
 <body>
 <div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
@@ -296,6 +327,11 @@ def build_html(meta, harv=None):
 <a href="https://justinahiggins614-cmyk.github.io/signature-cyber-mega-mall/">Signature Cyber Mega-Mall</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-university/">Signature University</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-books/">The Signature Book Depository</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-comics/">The Signature Comic Store</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-newspapers/">The Signature Global Newspaper Archive</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-3d-print/">The Signature 3D Print Depository</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-backend/">Signature Backend</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-boundless-generators/">The Signature Boundless Generator Archive</a>
 
 </div>
 <header>
@@ -337,6 +373,14 @@ def build_html(meta, harv=None):
       <option value="old">Oldest first</option>
     </select>
   </div>
+</div>
+<div class="finder" id="finder">
+  <div class="finder-h">&#9670; FINDER AI &mdash; describe what you're looking for in plain words</div>
+  <div class="finder-row">
+    <input id="finderq" type="search" aria-label="Describe what you're looking for" placeholder="Describe what you're looking for&hellip;" autocomplete="off">
+    <button id="findergo" type="button">Find it</button>
+  </div>
+  <div class="finder-res" id="finderres" aria-live="polite"></div>
 </div>
 <nav id="letters" aria-label="Jump by letter"></nav>
 <noscript><div class="noscript">This catalog needs JavaScript turned on to search and list patents.</div></noscript>
@@ -548,6 +592,7 @@ function recviewHTML(fr) {
     encodeURIComponent(fr.pub) + '">Catalog record ?patent=' + esc(fr.pub) + "</a></div>");
   L.push('<div class="rvrow"><span class="rvk">Full text:</span> <a class="full" href="https://patents.google.com/patent/' +
     encodeURIComponent(fr.pub) + '/" target="_blank" rel="noopener">View full patent text &#8594;</a></div>');
+  L.push(patentHelperHTML(fr));
   return L.join("");
 }
 function fetchFullRecord(r, done) {
@@ -945,6 +990,12 @@ function initUI() {
     jumpToLetter(b.getAttribute("data-l"));
   });
   document.getElementById("results").addEventListener("click", function (e) {
+    var hchip = e.target.closest ? e.target.closest(".hchip") : null;
+    if (hchip) { patentHelperAsk(hchip, hchip.getAttribute("data-hq")); return; }
+    var hsend = e.target.closest ? e.target.closest(".helper-send") : null;
+    if (hsend) { var hw = hsend.closest ? hsend.closest(".rechelper") : null;
+      var hin = hw ? hw.querySelector(".helper-input") : null;
+      var hv = hin ? hin.value.trim() : ""; if (hv) { hin.value = ""; patentHelperAsk(hsend, hv); } return; }
     var tg = e.target.closest ? e.target.closest("[data-open]") : null;
     if (tg) { openRecord(+tg.getAttribute("data-open"));
       tg.textContent = tg.textContent.indexOf("Hide") === 0 ? "View full patent text" : "Hide full record";
@@ -989,11 +1040,96 @@ function initUI() {
     }
   });
   document.getElementById("results").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target && e.target.classList && e.target.classList.contains("helper-input")){
+      var hw2 = e.target.closest ? e.target.closest(".rechelper") : null;
+      var hb2 = hw2 ? hw2.querySelector(".helper-send") : null;
+      var hv2 = e.target.value.trim(); if (hv2 && hb2) { e.target.value = ""; patentHelperAsk(hb2, hv2); } return; }
     if (e.key === "Enter" && e.target && e.target.classList && e.target.classList.contains("aiinput")){
       var card = e.target.closest(".card"), btn = card.querySelector(".aisend");
       if (btn) btn.click();
     }
   });
+
+/* ================= FINDER AI (additive, 2026-10-02) =================
+   Keyword extraction -> the catalog's EXISTING filter (apply/matchRow) ->
+   top 5 as ?patent= deep-link cards. Deterministic, no backend calls. */
+var FINDER_STOP={a:1,an:1,the:1,of:1,to:1,is:1,it:1,in:1,and:1,what:1,how:1,does:1,do:1,
+for:1,with:1,on:1,by:1,i:1,you:1,me:1,my:1,this:1,that:1,tell:1,about:1,please:1,can:1,
+are:1,was:1,were:1,be:1,or:1,as:1,at:1,from:1,find:1,looking:1,want:1,need:1,show:1,
+give:1,some:1,which:1,who:1,when:1,where:1,why:1,all:1,there:1,have:1,has:1,had:1,
+will:1,would:1,could:1,should:1,they:1,we:1,our:1,us:1,if:1,not:1,no:1,but:1,so:1,
+very:1,more:1,many:1,other:1,than:1,just:1,like:1,also:1,over:1,through:1,before:1,
+after:1,each:1,these:1,those:1,then:1,now:1};
+function finderWords(sx){return String(sx==null?"":sx).toLowerCase().replace(/[^a-z0-9\\s]/g," ").split(/\\s+/).filter(function(w){return w.length>=3&&!FINDER_STOP[w];});}
+var RECHELPERS={};
+function patentFinderCard(idx){
+  var r=DATA[idx],perma="?patent="+encodeURIComponent(r[0]);
+  var meta=(r[4]?"Owner: "+r[4]:"")+(r[4]&&r[3]?" \u00b7 ":"")+(r[3]?"Inventor: "+r[3]:"");
+  return '<a class="fcard" href="'+perma+'"><div class="fnum">'+esc(r[0])+' &nbsp;\u00b7&nbsp; '+esc(r[9]||"")+'</div>'+
+    '<h3>'+esc(r[1]||"(record title missing \u2014 under review)")+'</h3>'+
+    (meta?'<div class="fmeta">'+esc(meta)+'</div>':"")+
+    (r[2]?'<div class="fabs">'+esc(String(r[2]).slice(0,220))+(String(r[2]).length>220?"\u2026":"")+'</div>':"")+
+    '<div class="fgo">Take me there &rarr;</div></a>';
+}
+function finderRun(){
+  var qi=document.getElementById("finderq"),box=document.getElementById("finderres");
+  var ws=finderWords(qi.value);
+  if(!ws.length){box.innerHTML='<div class="finder-none">Describe the patent in a few plain words \u2014 e.g. "solar panel mounting bracket" \u2014 and the Finder scans the whole catalog.</div>';return;}
+  if(!DATA||!DATA.length){box.innerHTML='<div class="finder-none">Catalog index still loading \u2014 try again in a moment.</div>';return;}
+  var sq=state.q,sm=state.mode,ss=state.section,sc=state.cpc;
+  setMode("all");state.section="";state.cpc="";
+  var scores={};
+  ws.forEach(function(w){
+    state.q=w;apply();
+    for(var i=0;i<filtered.length;i++){var k=filtered[i];scores[k]=(scores[k]||0)+1;}
+  });
+  state.q=sq;setMode(sm);state.section=ss;state.cpc=sc;apply();
+  var ranked=Object.keys(scores).map(function(k){return {i:+k,n:scores[k]};});
+  ranked.sort(function(a,b){return b.n-a.n;});
+  var top=ranked.slice(0,5);
+  if(!top.length){box.innerHTML='<div class="finder-none">No patent records matched "'+esc(ws.join(" "))+'". Try fewer or different words.</div>';return;}
+  box.innerHTML='<div class="finder-count">TOP '+top.length+' MATCH'+(top.length>1?"ES":"")+' FOR \u201c'+esc(ws.join(" "))+'\u201d</div>'+
+    top.map(function(e){return patentFinderCard(e.i);}).join("");
+}
+/* ================= RECORD HELPER (additive, 2026-10-02) =================
+   Compact bubble on open patent records. Quotes ONLY the open record's own
+   fields; says plainly when the record does not cover a question. */
+function patentHelperHTML(fr){
+  RECHELPERS[fr.pub]=fr;
+  return '<div class="rechelper"><div class="rechelper-h">\u25c6 RECORD HELPER \u2014 quotes only this catalog record</div>'+
+   '<div class="helper-chips"><button type="button" class="hchip" data-hq="__what" data-pub="'+esc(fr.pub)+'">What is it?</button>'+
+   '<button type="button" class="hchip" data-hq="__facts" data-pub="'+esc(fr.pub)+'">Key facts</button>'+
+   '<button type="button" class="hchip" data-hq="__cover" data-pub="'+esc(fr.pub)+'">What this record covers</button></div>'+
+   '<div class="helper-log" aria-live="polite"></div>'+
+   '<div class="helper-row"><input class="helper-input" maxlength="300" placeholder="Ask about this patent record\u2026" aria-label="Ask the record helper">'+
+   '<button class="helper-send" type="button" data-pub="'+esc(fr.pub)+'">Ask</button></div></div>';
+}
+function patentHelperAnswer(fr,q){
+  function val(v){return String(v==null?"":v).trim();}
+  if(q==="__what")return "This is public patent record <b>"+esc(fr.pub)+"</b> \u2014 "+esc(fr.title||"(title missing)")+". "+(fr.abstract?esc(fr.abstract.slice(0,500))+(fr.abstract.length>500?"\u2026":""):"This record carries no abstract text.");
+  if(q==="__facts")return "<b>Key facts:</b> number <b>"+esc(fr.pub)+"</b>"+(fr.inventor?"; inventor: "+esc(fr.inventor):"")+ (fr.assignee?"; owner: "+esc(fr.assignee):"")+"; published "+esc(fr.publication_date||"date not listed")+"; field: "+esc((typeof CLASS_NAMES!=="undefined"&&CLASS_NAMES[fr.cpc])||fr.cpc||"general")+".";
+  if(q==="__cover")return "This record covers: publication number, title, abstract, inventor, owner/assignee, dates, classification, and record status. A patent record states what the applicant <b>claimed</b> \u2014 it does not prove the claims true, and it covers nothing else.";
+  var ws=finderWords(q);
+  var fields=[["Title",fr.title],["Abstract",fr.abstract],["Inventor",fr.inventor],["Owner / assignee",fr.assignee],["Publication date",fr.publication_date],["Filing date",fr.filing_date],["Grant date",fr.grant_date],["Priority date",fr.priority_date],["Classification",((typeof CLASS_NAMES!=="undefined"&&CLASS_NAMES[fr.cpc])||"")+" "+(fr.cpc||"")],["Status",fr.grant_date?("Granted "+fr.grant_date):fr.rtype],["Record type",fr.rtype],["Patent family",fr.family],["Country",fr.country],["Kind code",fr.kind]];
+  var best=null,bn=0;
+  for(var i=0;i<fields.length;i++){var hay=val(fields[i][1]).toLowerCase(),n=0;if(!hay)continue;
+    for(var j=0;j<ws.length;j++)if(hay.indexOf(ws[j])>=0)n++;
+    if(n>bn){bn=n;best=fields[i];}}
+  if(best&&bn>0)return "<b>"+esc(best[0])+":</b> "+esc(val(best[1]).slice(0,600));
+  return "<b>This record doesn\u2019t cover that.</b> The catalog only states what\u2019s in the harvested record \u2014 number, title, abstract, inventor, owner, dates, classification. Nothing is invented.";
+}
+function patentHelperAsk(btn,q){
+  var wrap=btn.closest?btn.closest(".rechelper"):null;if(!wrap)return;
+  var fr=RECHELPERS[btn.getAttribute("data-pub")];if(!fr)return;
+  var log=wrap.querySelector(".helper-log");
+  log.innerHTML+='<div class="hmsg you"><b>You:</b> '+esc(q)+'</div><div class="hmsg ai"><b>Helper:</b> '+patentHelperAnswer(fr,q)+'</div>';
+  log.scrollTop=log.scrollHeight;
+}
+
+
+  document.getElementById("findergo").onclick=finderRun;
+  document.getElementById("finderq").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();finderRun();}});
+
   /* ---- ?patent= deep link ---- */
   try {
     var pnum = new URLSearchParams(window.location.search).get("patent");
