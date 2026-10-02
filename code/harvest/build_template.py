@@ -338,7 +338,7 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 <a href="https://justinahiggins614-cmyk.github.io/signature-ai-robot-matcher/">AI Robot Matcher</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-experiment-solver/">Experiment Solver</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-ai-image-video-maker/">Signature AI Pixel</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-video-maker/">Video Maker AI</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-song-maker/">Signature Music Studio</a>
 
 </div>
 <header>
