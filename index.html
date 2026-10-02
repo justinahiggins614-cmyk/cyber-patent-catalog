@@ -26,6 +26,9 @@
   .stats .chip { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.22);
                  padding: 8px 16px; border-radius: 999px; font-size: .9em; color: #e6ecf7; }
   .stats .chip b { color: #fff; }
+  .harvestline { margin-top: 12px; font-size: .82em; color: #d9b84a; line-height: 1.9; }
+  .harvestline b { color: #fff; font-weight: 700; }
+  .harvestline .sep { color: #6b7fa8; margin: 0 8px; }
   .langrow { margin-top: 12px; color: #c3cfe6; font-size: .85em; }
   .langrow .goog-te-gadget { color: #c3cfe6 !important; font-size: .9em; }
   .goog-te-gadget .goog-te-combo { background: #fff; color: #1f2a37; border-radius: 8px;
@@ -53,6 +56,7 @@
             background: #fff; color: #33507e; cursor: pointer; font-size: .88em; font-weight: 600; }
   .secbtn.active { background: #16337a; border-color: #16337a; color: #fff; }
   .secbtn .seccount { display: block; font-size: .78em; font-weight: 400; opacity: .8; }
+  .secbtn .secstat { display: block; font-size: .72em; font-weight: 400; opacity: .75; font-style: italic; margin-top: 2px; }
   .filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
              margin: 12px 0 4px; }
   .filters button { padding: 8px 14px; border-radius: 999px; border: 1px solid #9fb0c6;
@@ -142,17 +146,21 @@
   .jahnet-t { color:#e8c766; font-weight:700; letter-spacing:.25em; margin-right:10px; }
   .jahnet a { color:#9fc2ff; text-decoration:none; margin:0 7px; white-space:nowrap; }
   .jahnet a:hover { text-decoration:underline; }
+  .jahnet-here { display:block; color:#e8c766; font-weight:700; letter-spacing:.12em; font-size:1.02em; }
+  .jahnet-cur { color:#e8c766; font-weight:700; margin:0 7px; white-space:nowrap; }
 </style>
 </head>
 <body>
 <div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
-<a href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">Globally Rejustered Patent Catalog</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/">Signature Spec Catalog Pending Patents</a>
+<span class="jahnet-here">YOU ARE HERE: GLOBALLY REJUSTERED PATENT CATALOG</span>
+<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Telephone Book</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Signature Universal Paradox Immune Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">The Signature Dictionary</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">JAH-N Wiki</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Signature Universal Paradox Immune Calculator</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Telephone Book</a>
+<span class="jahnet-cur">Globally Rejustered Patent Catalog</span>
+<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/specs.html">Signature Spec Catalog Pending Patents</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-llama/">Signature Llama</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-computer-systems/">The Signature PC System Depository</a>
 </div>
 <header>
@@ -167,10 +175,11 @@
     <span class="chip">Updated <b id="chipdate">2026-10-02</b></span>
   </div>
   <div class="langrow">&#127760; Language: <span id="google_translate_element"></span></div>
+  <div class="harvestline">Patent records currently indexed: <b>36,503</b><span class="sep">·</span>Harvesting: <b>ongoing</b><span class="sep">·</span>Last harvest: <b>Oct 1, 2026, 8:02 PM ET</b><span class="sep">·</span>Next harvest: <b>Oct 1, 2026, 8:32 PM ET</b> (every 30 min)</div>
 </header>
 <div class="searchwrap">
   <div class="searchrow">
-    <input id="q" type="search" placeholder="Search by patent number, title, keyword, company, or inventor&hellip;" autocomplete="off">
+    <input id="q" type="search" aria-label="Search patent records" placeholder="Search by patent number, title, keyword, company, or inventor&hellip;" autocomplete="off">
     <button id="go" type="button">Search</button>
   </div>
   <div class="moderow" role="group" aria-label="Search mode">
@@ -182,7 +191,7 @@
   </div>
   <div class="groups">
     <div class="gtitle">BROWSE BY GROUP</div>
-    <div class="secbtns" id="secbtns"><button type="button" class="secbtn" data-s="A">A · Human necessities<span class="seccount">35,029</span></button><button type="button" class="secbtn" data-s="B">B · Performing operations; transporting<span class="seccount">0</span></button><button type="button" class="secbtn" data-s="C">C · Chemistry; metallurgy<span class="seccount">0</span></button><button type="button" class="secbtn" data-s="D">D · Textiles; paper<span class="seccount">0</span></button><button type="button" class="secbtn" data-s="E">E · Fixed constructions<span class="seccount">0</span></button><button type="button" class="secbtn" data-s="F">F · Mechanical engineering<span class="seccount">0</span></button><button type="button" class="secbtn" data-s="G">G · Physics<span class="seccount">0</span></button><button type="button" class="secbtn" data-s="H">H · Electricity<span class="seccount">1,474</span></button></div>
+    <div class="secbtns" id="secbtns"><button type="button" class="secbtn" data-s="A">A · Human necessities<span class="seccount">35,029</span><span class="secstat">Indexed · harvest in progress (A41 · class 6 of 122)</span></button><button type="button" class="secbtn" data-s="B">B · Performing operations; transporting<span class="seccount">0</span><span class="secstat">Queued · class #16 of 122 up next</span></button><button type="button" class="secbtn" data-s="C">C · Chemistry; metallurgy<span class="seccount">0</span><span class="secstat">Queued · class #52 of 122 up next</span></button><button type="button" class="secbtn" data-s="D">D · Textiles; paper<span class="seccount">0</span><span class="secstat">Queued · class #71 of 122 up next</span></button><button type="button" class="secbtn" data-s="E">E · Fixed constructions<span class="seccount">0</span><span class="secstat">Queued · class #79 of 122 up next</span></button><button type="button" class="secbtn" data-s="F">F · Mechanical engineering<span class="seccount">0</span><span class="secstat">Queued · class #86 of 122 up next</span></button><button type="button" class="secbtn" data-s="G">G · Physics<span class="seccount">0</span><span class="secstat">Queued · class #103 of 122 up next</span></button><button type="button" class="secbtn" data-s="H">H · Electricity<span class="seccount">1,474</span><span class="secstat">Indexed</span></button></div>
   </div>
   <p class="coveragenote">Coverage is live and growing: the harvester works through the CPC classification (sections A&ndash;H) in order, so sections showing records have been harvested so far, while sections at 0 are queued and fill in as the harvest reaches them. Classes harvested so far: A01 (Agriculture &amp; forestry), A21 (Baking), A22 (Butchery &amp; meat), A23 (Foods &amp; foodstuffs), A24 (Tobacco), A41 (Clothing), H04L63 (Network security), H04L9 (Cryptography). A &ldquo;patent record&rdquo; here is the public publication record &mdash; number, title, abstract, owner, inventor, dates and classification &mdash; harvested from Google Patents. Nothing is invented: every record is a real harvested public record.</p>
   <div class="filters" id="filters"></div>
@@ -196,7 +205,7 @@
 </div>
 <nav id="letters" aria-label="Jump by letter"></nav>
 <noscript><div class="noscript">This catalog needs JavaScript turned on to search and list patents.</div></noscript>
-<p id="count"></p>
+<p id="count" role="status" aria-live="polite"></p>
 <div id="results"><p class="nores" id="bootmsg"><h3>Loading the catalog index&hellip;</h3></p></div>
 <button id="more" type="button" style="display:none">Show more</button>
 <button id="totop" type="button" title="Back to top">&#8593;</button>
@@ -778,6 +787,10 @@ function initUI() {
         if (fi >= state.shown) { state.shown = fi + 1; render(); }
         var pel = document.getElementById("p" + filtered[fi]);
         if (pel) {
+          /* patent-number deep links go straight to the opened record */
+          openRecord(filtered[fi]);
+          var tgb = pel.querySelector('[data-open]');
+          if (tgb) tgb.textContent = "Hide full record";
           pel.scrollIntoView(true);
           pel.style.borderColor = "#2563eb";
           setTimeout(function () { pel.style.borderColor = ""; }, 1600);

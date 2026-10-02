@@ -18,8 +18,14 @@ import os
 import re
 import urllib.parse
 import hashlib
-from datetime import date
+from datetime import date, datetime, timedelta
 from html import unescape as html_unescape
+
+try:
+    from zoneinfo import ZoneInfo
+    ET = ZoneInfo("America/New_York")
+except Exception:
+    ET = None
 
 from build_template import build_html, CLASS_NAMES, SECTION_NAMES
 
@@ -67,6 +73,74 @@ def letter_of(title):
         if ch.isalpha() or ch.isdigit():
             return "#"
     return "#"
+
+
+def harvest_status(meta):
+    """Per-section harvest status + last/next harvest times, all derived live.
+
+    Sections with records -> Indexed. The section holding the class the
+    30-min harvester is currently on -> Processing note. Sections at 0 ->
+    Queued with their queue position (a bare 0 never reads as "no patents
+    exist"). Times come from data/patents.jsonl's mtime (written by the
+    harvest sync just before this builder runs); next harvest = +30 min.
+    """
+    harv = {"sections": {}, "harvest_line": ""}
+    try:
+        last_ts = os.path.getmtime(SRC)
+    except OSError:
+        last_ts = None
+    state = {}
+    try:
+        with open(os.path.expanduser(
+                "~/workspace/your_files/cyber-patent-demos/harvest_state.json"),
+                encoding="utf-8") as f:
+            state = json.load(f)
+    except (FileNotFoundError, ValueError):
+        pass
+    cpcs = state.get("cpcs", [])
+    idx = state.get("cpc_idx")
+    cur_class = cpcs[idx] if cpcs and idx is not None and 0 <= idx < len(cpcs) else ""
+    cur_letter = cur_class[:1]
+    total = len(cpcs)
+    pos = (idx + 1) if idx is not None else 0
+    first_of = {}
+    for i, c in enumerate(cpcs):
+        first_of.setdefault(c[:1], i + 1)
+
+    sections = meta.get("sections", {})
+    for s in "ABCDEFGH":
+        n = sections.get(s, 0)
+        if n > 0:
+            if s == cur_letter and cur_class:
+                stat = ("Indexed · harvest in progress (%s · class %d of %d)"
+                        % (cur_class, pos, total))
+            else:
+                stat = "Indexed"
+        elif s == cur_letter and cur_class:
+            stat = "Processing (%s · class %d of %d)" % (cur_class, pos, total)
+        else:
+            qn = first_of.get(s)
+            stat = ("Queued · class #%d of %d up next" % (qn, total)) if qn else "Queued"
+        harv["sections"][s] = {"stat": stat}
+
+    def fmt_et(ts):
+        dt = datetime.fromtimestamp(ts, tz=ET) if ET else datetime.fromtimestamp(ts).astimezone()
+        return dt.strftime("%b %-d, %Y, %-I:%M %p ET").replace(" 0", " ").replace("AM", "AM").replace("PM", "PM")
+
+    count = meta.get("record_count", 0)
+    if last_ts:
+        last_s = fmt_et(last_ts)
+        next_s = fmt_et(last_ts + 30 * 60)
+        line = ("Patent records currently indexed: <b>%s</b>"
+                '<span class="sep">·</span>Harvesting: <b>ongoing</b>'
+                '<span class="sep">·</span>Last harvest: <b>%s</b>'
+                '<span class="sep">·</span>Next harvest: <b>%s</b> (every 30 min)'
+                % (f"{count:,}", last_s, next_s))
+    else:
+        line = ("Patent records currently indexed: <b>%s</b>"
+                '<span class="sep">·</span>Harvesting: <b>ongoing</b>' % f"{count:,}")
+    harv["harvest_line"] = line
+    return harv
 
 
 def main():
@@ -183,7 +257,7 @@ def main():
         json.dump(meta, f, indent=1)
     print("meta:", json.dumps(meta))
 
-    html = build_html(meta)
+    html = build_html(meta, harvest_status(meta))
     for dst in (DST, DST2):
         with open(dst, "w", encoding="utf-8") as f:
             f.write(html)

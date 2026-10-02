@@ -63,21 +63,30 @@ SECTION_NAMES = {
 }
 
 
-def build_html(meta):
+def build_html(meta, harv=None):
     count = meta["record_count"]
     today = meta["last_updated"]
     sections = meta["sections"]
     class_json = json.dumps(CLASS_NAMES, ensure_ascii=False)
     section_names = json.dumps(SECTION_NAMES, ensure_ascii=False)
     meta_json = json.dumps(meta, ensure_ascii=False)
+    harv = harv or {}
+    sec_status = harv.get("sections", {})
 
     sec_buttons = []
     for s in sorted(SECTION_NAMES):
         n = sections.get(s, 0)
+        st = sec_status.get(s, {})
+        stat = st.get("stat", "")
         sec_buttons.append(
             '<button type="button" class="secbtn" data-s="%s">%s · %s'
-            '<span class="seccount">%s</span></button>' % (s, s, SECTION_NAMES[s], f"{n:,}"))
+            '<span class="seccount">%s</span>'
+            '<span class="secstat">%s</span></button>' % (s, s, SECTION_NAMES[s], f"{n:,}", esc_html(stat)))
     sec_html = "".join(sec_buttons)
+
+    # Harvest status line: kept as its own line, visually separate from the
+    # "patents / areas / updated" chips above it.
+    hl = harv.get("harvest_line", "")
 
     # classification counts always derive from actual records, never the name map
     areas_covered = meta.get("areas_covered", len(CLASS_NAMES))
@@ -124,6 +133,9 @@ def build_html(meta):
   .stats .chip { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.22);
                  padding: 8px 16px; border-radius: 999px; font-size: .9em; color: #e6ecf7; }
   .stats .chip b { color: #fff; }
+  .harvestline { margin-top: 12px; font-size: .82em; color: #d9b84a; line-height: 1.9; }
+  .harvestline b { color: #fff; font-weight: 700; }
+  .harvestline .sep { color: #6b7fa8; margin: 0 8px; }
   .langrow { margin-top: 12px; color: #c3cfe6; font-size: .85em; }
   .langrow .goog-te-gadget { color: #c3cfe6 !important; font-size: .9em; }
   .goog-te-gadget .goog-te-combo { background: #fff; color: #1f2a37; border-radius: 8px;
@@ -151,6 +163,7 @@ def build_html(meta):
             background: #fff; color: #33507e; cursor: pointer; font-size: .88em; font-weight: 600; }
   .secbtn.active { background: #16337a; border-color: #16337a; color: #fff; }
   .secbtn .seccount { display: block; font-size: .78em; font-weight: 400; opacity: .8; }
+  .secbtn .secstat { display: block; font-size: .72em; font-weight: 400; opacity: .75; font-style: italic; margin-top: 2px; }
   .filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
              margin: 12px 0 4px; }
   .filters button { padding: 8px 14px; border-radius: 999px; border: 1px solid #9fb0c6;
@@ -240,17 +253,21 @@ def build_html(meta):
   .jahnet-t { color:#e8c766; font-weight:700; letter-spacing:.25em; margin-right:10px; }
   .jahnet a { color:#9fc2ff; text-decoration:none; margin:0 7px; white-space:nowrap; }
   .jahnet a:hover { text-decoration:underline; }
+  .jahnet-here { display:block; color:#e8c766; font-weight:700; letter-spacing:.12em; font-size:1.02em; }
+  .jahnet-cur { color:#e8c766; font-weight:700; margin:0 7px; white-space:nowrap; }
 </style>
 </head>
 <body>
 <div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
-<a href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">Globally Rejustered Patent Catalog</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/">Signature Spec Catalog Pending Patents</a>
+<span class="jahnet-here">YOU ARE HERE: GLOBALLY REJUSTERED PATENT CATALOG</span>
+<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Telephone Book</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Signature Universal Paradox Immune Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">The Signature Dictionary</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">JAH-N Wiki</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Signature Universal Paradox Immune Calculator</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Telephone Book</a>
+<span class="jahnet-cur">Globally Rejustered Patent Catalog</span>
+<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/specs.html">Signature Spec Catalog Pending Patents</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-llama/">Signature Llama</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-computer-systems/">The Signature PC System Depository</a>
 </div>
 <header>
@@ -265,10 +282,11 @@ def build_html(meta):
     <span class="chip">Updated <b id="chipdate">__DATE__</b></span>
   </div>
   <div class="langrow">&#127760; Language: <span id="google_translate_element"></span></div>
+  <div class="harvestline">__HARVEST_LINE__</div>
 </header>
 <div class="searchwrap">
   <div class="searchrow">
-    <input id="q" type="search" placeholder="Search by patent number, title, keyword, company, or inventor&hellip;" autocomplete="off">
+    <input id="q" type="search" aria-label="Search patent records" placeholder="Search by patent number, title, keyword, company, or inventor&hellip;" autocomplete="off">
     <button id="go" type="button">Search</button>
   </div>
   <div class="moderow" role="group" aria-label="Search mode">
@@ -294,7 +312,7 @@ def build_html(meta):
 </div>
 <nav id="letters" aria-label="Jump by letter"></nav>
 <noscript><div class="noscript">This catalog needs JavaScript turned on to search and list patents.</div></noscript>
-<p id="count"></p>
+<p id="count" role="status" aria-live="polite"></p>
 <div id="results"><p class="nores" id="bootmsg"><h3>Loading the catalog index&hellip;</h3></p></div>
 <button id="more" type="button" style="display:none">Show more</button>
 <button id="totop" type="button" title="Back to top">&#8593;</button>
@@ -876,6 +894,10 @@ function initUI() {
         if (fi >= state.shown) { state.shown = fi + 1; render(); }
         var pel = document.getElementById("p" + filtered[fi]);
         if (pel) {
+          /* patent-number deep links go straight to the opened record */
+          openRecord(filtered[fi]);
+          var tgb = pel.querySelector('[data-open]');
+          if (tgb) tgb.textContent = "Hide full record";
           pel.scrollIntoView(true);
           pel.style.borderColor = "#2563eb";
           setTimeout(function () { pel.style.borderColor = ""; }, 1600);
@@ -937,6 +959,7 @@ function googleTranslateElementInit() {
     return (html.replace("__COUNT__", f"{count:,}")
                 .replace("__AREAS_N__", f"{areas_covered:,}")
                 .replace("__DATE__", today)
+                .replace("__HARVEST_LINE__", hl)
                 .replace("__SECTIONS__", sec_html)
                 .replace("__COVERAGE_NOTE__", coverage_note)
                 .replace("__CLASSES__", class_json)
