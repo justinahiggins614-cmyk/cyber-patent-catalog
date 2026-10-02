@@ -1,11 +1,11 @@
 {
  "catalog_version": "GRPC-20261002",
- "record_count": 46098,
+ "record_count": 46356,
  "last_updated": "2026-10-02",
  "source_snapshot": "Google Patents harvest, all CPC A-H, 1976-2026",
- "catalog_hash": "sha256:09268812f51b9f3c83327422ffb805aaf4f7f8d16ab645a43e727c27f9899865",
+ "catalog_hash": "sha256:2589430506773c98973a51e45a5d66febc9ca798709ed7a9fa30dd0b8f91dd35",
  "sections": {
-  "A": 44624,
+  "A": 44882,
   "H": 1474
  },
  "areas_covered": 10,
