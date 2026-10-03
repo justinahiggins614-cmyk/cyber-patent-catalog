@@ -120,7 +120,7 @@ def build_html(meta, harv=None):
 <meta name="description" content="Globally Rejustered Patent Catalog: a free, searchable public index of __COUNT__ published patent records (numbers, titles, owners, inventors, dates, CPC classes) harvested from Google Patents. Not affiliated with the USPTO or any government agency.">
 <link rel="canonical" id="canon" href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">
 <script type="application/ld+json" id="catalog-ld">
-{"@context":"https://schema.org","@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents across all CPC sections A–H.","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"}]},"numberOfItems":"__COUNT__","dateModified":"__DATE__","isAccessibleForFree":true}
+{"@context":"https://schema.org","@graph":[{"@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents across all CPC sections A–H.","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"}]},"numberOfItems":"__COUNT__","dateModified":"__DATE__","isAccessibleForFree":true},{"@type":"Dataset","name":"Globally Rejustered Patent Catalog","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","creator":{"@type":"Person","name":"Justin Addam Higgins"}}]}
 </script>
 <script src="js/jah-talk-fallback.js"></script>
 <style>
@@ -142,6 +142,14 @@ def build_html(meta, harv=None):
                  line-height: 1.5; }
   .stats { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
            margin-top: 16px; }
+  /* FIX-03 (2026-10-02): stat tickers collapse on small screens; desktop renders open, identical to before */
+  details.stattoggle { border: 0; padding: 0; margin: 0; }
+  details.stattoggle > .stattoggle-s { display: none; }
+  @media (max-width: 767px) {
+    details.stattoggle > .stattoggle-s { display: block; cursor: pointer; font-size: .78em; letter-spacing: .2em;
+      color: #16337a; padding: 8px 4px; text-align: center; border: 1px dashed #9fb2c8;
+      border-radius: 8px; margin: 8px 12px 0; }
+  }
   .stats .chip { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.22);
                  padding: 8px 16px; border-radius: 999px; font-size: .9em; color: #e6ecf7; }
   .stats .chip b { color: #fff; }
@@ -314,7 +322,7 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 </style>
 </head>
 <body>
-<div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
+<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
 <a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Phone Book</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">Dictionary</a>
@@ -341,18 +349,20 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 <a href="https://justinahiggins614-cmyk.github.io/signature-ai-image-video-maker/">Signature AI Pixel</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-ai-song-maker/">Signature Music Studio</a>
 
-</div>
+</div></nav>
 <header>
   <div class="seal">&#167;</div>
   <p class="eyebrow">PUBLIC RECORDS INDEX</p>
   <h1>Globally Rejustered Patent Catalog</h1>
   <p class="sub">A comprehensive public index of published patent records &mdash;
   every field of invention, from software to medicine to engineering &mdash; fully searchable.</p>
+  <details class="stattoggle" open><summary class="stattoggle-s">CATALOG STATS</summary>
   <div class="stats">
     <span class="chip"><b id="chipcount">__COUNT__</b> patents</span>
     <span class="chip"><b id="chipareas">__AREAS_N__</b> technology areas</span>
     <span class="chip">Updated <b id="chipdate">__DATE__</b></span>
   </div>
+  </details>
   <div class="langrow">&#127760; Language: <span id="google_translate_element"></span></div>
   <div class="harvestline">__HARVEST_LINE__</div>
 </header>
@@ -1238,6 +1248,15 @@ function googleTranslateElementInit() {
       "google_translate_element");
   } catch (e) {}
 }
+/* FIX-03 (2026-10-02): collapse stat tickers on small screens so the search bar stays instantly reachable */
+(function () {
+  try {
+    if (window.matchMedia && window.matchMedia("(max-width: 767px)").matches) {
+      var d = document.querySelector("details.stattoggle");
+      if (d) d.removeAttribute("open");
+    }
+  } catch (e) {}
+})();
 </script>
 <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
