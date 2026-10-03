@@ -230,6 +230,26 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 .statuspill.pending { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
 .statuspill.rejustered { background: #e0e7ff; color: #3730a3; border: 1px solid #a5b4fc; }
 .statuspill.review { background: #fde8e8; color: #8a1f1f; border: 1px solid #fca5a5; }
+/* NETWORK 10-FIX consistency layer (additive, 2026-10-03) */
+.sitekicker { color: #e8c766; font-weight: 700; letter-spacing: .2em; font-size: .85em;
+  border: 1px solid #e8c766; border-radius: 3px; padding: 1px 8px; margin-left: 10px; white-space: nowrap; }
+.jahstatus { display: inline-block; font-size: .72em; letter-spacing: .18em; font-weight: 700;
+  color: #0a0f1e; background: #e8c766; border-radius: 3px; padding: 2px 9px; margin: 6px 8px 6px 0; }
+.jahstatus.pub { background: #7fe0c3; color: #0a1a14; }
+.jahstatus.gen { background: #9fc2ff; color: #0a1424; }
+.jahstatus.sim { background: #b48cff; color: #141021; }
+.jahprov { font-size: .78em; color: #5b6b8c; margin: 8px 0 2px; letter-spacing: .02em; }
+.jahrecord { border: 1px solid #c9d4ea; border-radius: 8px; padding: 8px 12px; margin: 10px 0;
+  background: #f4f7fd; font-size: .8em; color: #1e3a8a; }
+.jahrecord .jrp-meta { color: #5b6b8c; margin: 4px 0 8px; font-size: .92em; }
+.jahrecord .jrp-meta b { color: #16337a; font-weight: 700; letter-spacing: .08em; }
+.jahrecord .jrp-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.jrp-btn { background: #fff; border: 1px solid #16337a; color: #16337a; border-radius: 6px;
+  padding: 7px 12px; font-size: .85em; cursor: pointer; text-decoration: none; display: inline-block; }
+.jrp-btn:hover { background: #e8eefb; }
+.jah-aiid { border-left: 3px solid #16337a; background: #eef2fb; padding: 8px 12px; margin: 8px 0;
+  font-size: .82em; color: #1e3a8a; }
+.jah-aiid b { color: #16337a; letter-spacing: .06em; font-weight: 700; }
 /* FIX-04: mobile card density */
 @media (max-width: 767px) {
   .card { padding: 12px 12px; }
@@ -252,7 +272,7 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 </style>
 </head>
 <body>
-<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
+<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 6 OF 25</span>
 <a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Phone Book</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">Dictionary</a>
@@ -478,6 +498,35 @@ function apply() {
   state.shown = 40;
   render();
 }
+/* ============ NETWORK 10-FIX CONSISTENCY LAYER (additive, 2026-10-03) ============
+   Canonical record-status badge (exactly one of the network set), record action
+   panel (OPEN.SOURCE.ID.VERSION.SHARE.COPY.DOWNLOAD.READ ALOUD), provenance
+   lines, AI identity cards. ES5-safe. */
+function jahStatusBadge(status){
+  var cls = status === "SIMULATION" ? " sim" : (status === "GENERATED" ? " gen" : (status === "PUBLIC RECORD" ? " pub" : ""));
+  return '<span class="jahstatus' + cls + '" title="Network record status — one canonical status per record">' + esc(status) + "</span>";
+}
+function jahProvenance(txt){ return '<div class="jahprov">PROVENANCE · ' + esc(txt) + "</div>"; }
+function jahAiCard(name, duties, engine){
+  var d = (duties && duties.slice) ? duties.slice(0, 3).join(" · ") : "";
+  return '<div class="jah-aiid" role="note" aria-label="AI identity card"><b>AI IDENTITY</b> · ' +
+    "<b>Name:</b> " + esc(name) + " · <b>Duties:</b> " + esc(d || "answers from its own record") +
+    " · <b>Engine:</b> " + esc(engine || "On-page rule-based responder — no external model") + "</div>";
+}
+function jahRecordPanelHTML(o){
+  var h = '<div class="jahrecord">' +
+    jahStatusBadge(o.status || "PUBLIC RECORD") +
+    '<div class="jrp-meta"><b>ID</b> ' + esc(o.id || "") + " · <b>VERSION</b> " + esc(o.ver || "") +
+    " · <b>SOURCE</b> " + esc(o.source || "") + "</div>" +
+    '<div class="jrp-row">' +
+    '<a class="jrp-btn" href="' + esc(o.openUrl || "#") + '">OPEN</a>' +
+    '<button type="button" class="jrp-btn panel-share" data-i="' + o.i + '">SHARE</button>' +
+    '<button type="button" class="jrp-btn copybtn" data-i="' + o.i + '">COPY</button>' +
+    '<button type="button" class="jrp-btn dlbtn" data-i="' + o.i + '">DOWNLOAD</button>' +
+    '<button type="button" class="jrp-btn readbtn" data-i="' + o.i + '">READ ALOUD</button></div>';
+  if (o.prov) h += jahProvenance(o.prov);
+  return h + "</div>";
+}
 function statusPill(r) {
   /* FIX-04 (2026-10-02): status pills. Live = granted patent, in force as
      recorded; Pending = published application awaiting a grant decision;
@@ -512,8 +561,9 @@ function card(idx) {
     (assignee ? "Owner: " + esc(assignee) + "<br>" : "") +
     (inventor ? "Inventor: " + esc(inventor) + "<br>" : "") +
     (dates ? dates : "") + '</div>' +
-    '<div><span class="rtype">' + esc(r[10]) + '</span> ' + statusPill(r) + ' <span class="tag">' + cls + "</span></div>" +
-    '<div class="prov">Source: Google Patents &nbsp;·&nbsp; Record hash: <span class="hash">' +
+    '<div><span class="rtype">' + esc(r[10]) + '</span> ' + statusPill(r) + ' ' + jahStatusBadge("PUBLIC RECORD") + ' <span class="tag">' + cls + "</span></div>" +
+    '<div class="prov">Public record &nbsp;·&nbsp; Source: Google Patents &nbsp;·&nbsp; Owner: ' +
+    (assignee ? esc(assignee) : "not listed in source") + ' &nbsp;·&nbsp; Record hash: <span class="hash">' +
       esc(r[16] || "n/a") + '</span> &nbsp;·&nbsp; <a href="' + link +
       '" target="_blank" rel="noopener">Original record &#8594;</a></div>' +
     (r[2] ? '<div class="abs">' + esc(r[2]) + "</div>" : "") +
@@ -521,15 +571,15 @@ function card(idx) {
       (opened ? "Hide full record" : "View full patent text") + "</button>" +
     '<div class="recview" id="rv' + idx + '" style="display:' + (opened ? "block" : "none") + '">' +
       (opened ? recviewHTML(opened) : '<div class="loading">Loading full record&hellip;</div>') + "</div>" +
-    '<div class="ptools">' +
-    '<button class="pbtn readbtn" type="button" data-i="' + idx + '">\uD83D\uDD0A Read aloud</button>' +
-    '<button class="pbtn ghost aibtn" type="button" data-i="' + idx + '">\uD83D\uDCAC Ask the AI</button>' +
-    '<button class="pbtn ghost copybtn" type="button" data-i="' + idx + '">\u29C9 Copy</button>' +
-    '<button class="pbtn ghost dlbtn" type="button" data-i="' + idx + '">\u2913 Download</button>' +
-    "</div>" +
+    jahRecordPanelHTML({status: "PUBLIC RECORD", id: r[9] + " / " + r[0],
+      ver: (typeof META_BAKED !== "undefined" && META_BAKED.catalog_version) || "",
+      source: "Google Patents harvest (public record)", openUrl: perma, title: r[1], i: idx,
+      prov: "Cataloged by the Globally Rejustered Patent Catalog harvester · 2026-10-03"}) +
+    '<button class="pbtn ghost aibtn" type="button" data-i="' + idx + '" style="margin-top:6px">\uD83D\uDCAC Ask the AI</button>' +
     '<div class="aichat"><div class="ailog"></div>' +
     '<div class="airow"><input type="text" class="aiinput" placeholder="Ask about this patent&hellip;" aria-label="Ask the AI about this patent">' +
-    '<button class="pbtn aisend" type="button" data-i="' + idx + '">Send</button></div></div>' +
+    '<button class="pbtn aisend" type="button" data-i="' + idx + '">Send</button></div>' +
+    jahProvenance("Personal-AI replies generated on this page by the catalog’s rule-based responder (no external model) · from record " + r[0] + " · 2026-10-03") + "</div>" +
     "</div>";
   return h;
 }
@@ -753,10 +803,12 @@ function stopAudio2(){
   try { if (hasSpeech2()) window.speechSynthesis.cancel(); } catch(e){}
   FX2.active=false;
   if (FX2.audio){ try { FX2.audio.pause(); } catch(e){} FX2.audio=null; }
-  if (readingBtn){ readingBtn.innerHTML="\uD83D\uDD0A Read aloud"; readingBtn=null; }
+  if (readingBtn){ var dl = readingBtn.getAttribute("data-label");
+    readingBtn.innerHTML = dl ? dl : "\uD83D\uDD0A Read aloud"; readingBtn=null; }
 }
 function readText2(text, btn, done){
   stopAudio2();
+  if (btn && !btn.getAttribute("data-label")) btn.setAttribute("data-label", btn.innerHTML);
   if (!text || !text.trim()){ if(done)done(); return; }
   readingBtn = btn; if (btn) btn.innerHTML="\u23F9 Stop";
   var fin = function(){ if(done)done(); };
@@ -845,7 +897,7 @@ function patentAIraw(r, q){
   if (has("claim 1","what is claim","claims"))
     return "The source record for this catalog provides the title and abstract only — claim-level text is not in this catalog's record. See the full patent text for the claims.";
   if (has("link","full text","full patent","read more","more detail","google patent","official","source"))
-    return "You can read the full official patent text here: " + link;
+    return "You can read the full patent text on Google Patents (the public source) here: " + link;
   if (has("what is","summar","about","explain","describe","tell me","overview","mean","what does"))
     return title + ". " + (abs ? firstSentences(abs, 3) : "No abstract is listed for this record.");
   if (has("thank"))
@@ -1059,8 +1111,14 @@ function initUI() {
       var card = abtn.closest(".card"), chat = card.querySelector(".aichat");
       var log = chat.querySelector(".ailog");
       chat.classList.toggle("open");
+      var di = +abtn.getAttribute("data-i");
       if (chat.classList.contains("open") && !log.children.length){
-        aiBubble(log, "a", patentAI(DATA[+abtn.getAttribute("data-i")], "hello"));
+        var prof = patentAIProfile(DATA[di]);
+        var idc = document.createElement("div");
+        idc.innerHTML = jahAiCard(prof.name, prof.abilities,
+          "On-page rule-based responder — answers only from this catalog record; no external model");
+        if (idc.firstChild) chat.insertBefore(idc.firstChild, log);
+        aiBubble(log, "a", patentAI(DATA[di], "hello"));
       }
       return;
     }
@@ -1077,6 +1135,9 @@ function initUI() {
     }
     var ar = e.target.closest ? e.target.closest(".airead") : null;
     if (ar){ readText2(AIREPLIES[+ar.getAttribute("data-k")] || "", null); return; }
+    var sh = e.target.closest ? e.target.closest(".panel-share") : null;
+    if (sh){ var si = +sh.getAttribute("data-i"), sr = DATA[si];
+      copyText2(location.origin + location.pathname + "?patent=" + encodeURIComponent(sr[0]), sh); return; }
     var cb = e.target.closest ? e.target.closest(".copybtn") : null;
     if (cb){ copyText2(patentFileTextIdx(+cb.getAttribute("data-i")), cb); return; }
     var db = e.target.closest ? e.target.closest(".dlbtn") : null;
@@ -1124,11 +1185,24 @@ function finderRun(){
   var top=ranked.slice(0,5);
   if(!top.length){box.innerHTML='<div class="finder-none">No patent records matched "'+esc(ws.join(" "))+'". Try fewer or different words.</div>';return;}
   box.innerHTML='<div class="finder-count">TOP '+top.length+' MATCH'+(top.length>1?"ES":"")+' FOR “'+esc(ws.join(" "))+'”</div>'+
+    jahProvenance("Finder-AI results generated on this page by the keyword finder over the catalog index · " +
+      ((typeof META_BAKED!=="undefined"&&META_BAKED.catalog_version)||"") + " · " +
+      ((typeof META_BAKED!=="undefined"&&META_BAKED.last_updated)||""))+
     top.map(function(e){return patentFinderCard(e.i);}).join("");
 }
 
 
   document.getElementById("findergo").onclick=finderRun;
+  (function(){
+    var fh = document.querySelector("#finder .finder-h");
+    if (fh && !document.getElementById("finder-aiid")){
+      var d = document.createElement("div"); d.id = "finder-aiid";
+      d.innerHTML = jahAiCard("Finder AI",
+        ["finds catalog records from plain-words descriptions", "answers only from the catalog index"],
+        "On-page keyword matcher over the catalog’s own search index — no external model, no invented results");
+      if (d.firstChild) fh.parentNode.insertBefore(d.firstChild, fh.nextSibling);
+    }
+  })();
   document.getElementById("finderq").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();finderRun();}});
 
   /* ---- ?patent= deep link ---- */
@@ -1182,6 +1256,8 @@ var RECHELPERS={};
 function patentHelperHTML(fr){
   RECHELPERS[fr.pub]=fr;
   return '<div class="rechelper"><div class="rechelper-h">◆ RECORD HELPER — quotes only this catalog record</div>'+
+ jahAiCard("Record Helper", ["quotes this record’s own fields", "says plainly when the record doesn’t cover a question"], "On-page rule-based responder — no external model")+
+ jahProvenance("Record-helper answers generated on this page from the open record’s own fields · 2026-10-03")+
    '<div class="helper-chips"><button type="button" class="hchip" data-hq="__what" data-pub="'+esc(fr.pub)+'">What is it?</button>'+
    '<button type="button" class="hchip" data-hq="__facts" data-pub="'+esc(fr.pub)+'">Key facts</button>'+
    '<button type="button" class="hchip" data-hq="__cover" data-pub="'+esc(fr.pub)+'">What this record covers</button></div>'+
