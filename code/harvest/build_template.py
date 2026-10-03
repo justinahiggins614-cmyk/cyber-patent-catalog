@@ -444,7 +444,7 @@ function paint(){try{b.innerHTML=(document.documentElement.dataset.theme==="dark
 b.addEventListener("click",function(){try{var d=document.documentElement;var dark=d.dataset.theme!=="dark";d.dataset.theme=dark?"dark":"";localStorage.setItem("jah-theme",dark?"dark":"light");}catch(e){}paint();});
 paint();})();
 </script>
-<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 6 OF 25</span>
+<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 8 OF 27</span>
 <a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Phone Book</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">Dictionary</a>
