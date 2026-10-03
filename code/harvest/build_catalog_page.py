@@ -151,6 +151,7 @@ def main():
     except (FileNotFoundError, ValueError):
         idmap = {}
     next_id = max([int(v.split("-")[-1]) for v in idmap.values()] or [0]) + 1
+    start_next = next_id  # FIX-02 (2026-10-02): JAH-PAT numbers at/after this are this run's new records
 
     # --- read source records with byte offsets (for lazy Range fetches)
     raws = []
@@ -214,6 +215,9 @@ def main():
     with open(IDMAP, "w", encoding="utf-8") as f:
         json.dump(idmap, f, indent=1, sort_keys=True)
 
+    # FIX-02 (2026-10-02): records minted this run, for the incremental registry feed.
+    new_recs = [e for e in enriched if int(e["jah"].rsplit("-", 1)[-1]) >= start_next]
+
     # --- compact search index (abstract capped at 400 chars; full record lazy-fetched)
     rows = []
     for e in enriched:
@@ -257,7 +261,7 @@ def main():
         json.dump(meta, f, indent=1)
     print("meta:", json.dumps(meta))
 
-    html = build_html(meta, harvest_status(meta))
+    html = build_html(meta, harvest_status(meta), enriched)
     for dst in (DST, DST2):
         with open(dst, "w", encoding="utf-8") as f:
             f.write(html)
@@ -270,8 +274,9 @@ def main():
     import build_patent_index
     build_patent_index.main()
 
-    build_sitemaps(enriched)
+    build_sitemaps(enriched, set(e["pub"] for e in new_recs))
     build_csv(enriched)
+    write_registry_feed(new_recs, meta, today)
     refresh_api(len(enriched), today)
 
 
@@ -295,9 +300,13 @@ def build_csv(enriched):
         len(enriched), path, os.path.getsize(path) / 1048576))
 
 
-def build_sitemaps(enriched):
+def build_sitemaps(enriched, new_pubs=None):
+    """Rebuild per-record sitemaps. FIX-02 (2026-10-02): records harvested in
+    the newest batch carry <lastmod> so crawlers see what's fresh."""
     SITE = "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/"
     CHUNK = 40000
+    today = date.today().isoformat()
+    new_pubs = new_pubs or set()
     import glob as _glob
     files = []
     pubs = [e["pub"] for e in enriched]
@@ -305,8 +314,12 @@ def build_sitemaps(enriched):
         lines = ['<?xml version="1.0" encoding="UTF-8"?>',
                  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
         for p in pubs[start:start + CHUNK]:
-            lines.append('  <url><loc>%s?patent=%s</loc><changefreq>monthly</changefreq></url>' %
-                         (SITE, urllib.parse.quote(p, safe="")))
+            tag = '  <url><loc>%s?patent=%s</loc>' % (
+                SITE, urllib.parse.quote(p, safe=""))
+            if p in new_pubs:
+                tag += '<lastmod>%s</lastmod>' % today
+            tag += '<changefreq>monthly</changefreq></url>'
+            lines.append(tag)
         lines.append('</urlset>')
         fname = "sitemap-records-%d.xml" % n
         with open(os.path.join(ROOT, fname), "w", encoding="utf-8") as fh:
@@ -326,12 +339,95 @@ def build_sitemaps(enriched):
     print("sitemaps: %d file(s), %d urls" % (len(files), len(pubs)))
 
 
+def write_registry_feed(new_recs, meta, today):
+    """FIX-02 (2026-10-02): dedicated incremental patent registry feed.
+    data/index-batches.json is the persistent append-only batch log (last 24
+    batches kept); data/patents-index.json is the public feed with batch
+    summaries + the 200 most recent additions."""
+    SITE = "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/"
+    batch_path = os.path.join(ROOT, "data", "index-batches.json")
+    try:
+        batches = json.load(open(batch_path, encoding="utf-8"))
+        if not isinstance(batches, list):
+            batches = []
+    except (FileNotFoundError, ValueError):
+        batches = []
+    batch = {
+        "catalog_version": meta["catalog_version"],
+        "date": today,
+        "added": len(new_recs),
+        "records": [
+            {"pub": e["pub"], "title": e["title"],
+             "publication_date": e["publication_date"], "cpc": e["cpc"],
+             "catalog_id": e["jah"],
+             "url": SITE + "?patent=" + urllib.parse.quote(e["pub"], safe="")}
+            for e in new_recs[:500]
+        ],
+    }
+    existing = None
+    for b in batches:
+        if b.get("catalog_version") == batch["catalog_version"]:
+            existing = b
+            break
+    if existing is None:
+        batches.append(batch)
+    else:
+        # Same-day rebuild (the 30-min cron): merge the new records in so the
+        # batch stays additive instead of being skipped or duplicated.
+        have = set(r["pub"] for r in existing["records"])
+        for rec in batch["records"]:
+            if rec["pub"] not in have:
+                existing["records"].append(rec)
+                have.add(rec["pub"])
+        existing["records"] = existing["records"][:1000]
+        existing["added"] = len(existing["records"])
+        existing["date"] = batch["date"]
+    batches = batches[-24:]
+    with open(batch_path, "w", encoding="utf-8") as f:
+        json.dump(batches, f, ensure_ascii=False)
+    recent = []
+    for b in reversed(batches):
+        for rec in b["records"]:
+            recent.append(rec)
+            if len(recent) >= 200:
+                break
+        if len(recent) >= 200:
+            break
+    feed = {
+        "title": "Globally Rejustered Patent Catalog — registry feed",
+        "description": "Incremental registry of newly harvested patent batches. "
+                       "Independent catalog of public records; not affiliated "
+                       "with the USPTO or any government agency.",
+        "home_page_url": SITE,
+        "feed_url": SITE + "data/patents-index.json",
+        "catalog_version": meta["catalog_version"],
+        "record_count": meta["record_count"],
+        "updated": today,
+        "batches": [{"catalog_version": b["catalog_version"], "date": b["date"],
+                     "added": b["added"]} for b in batches],
+        "recent_additions": recent,
+    }
+    with open(os.path.join(ROOT, "data", "patents-index.json"), "w", encoding="utf-8") as f:
+        json.dump(feed, f, ensure_ascii=False)
+    print("registry feed: %d batches, %d recent additions" % (len(batches), len(recent)))
+
+
 def refresh_api(count, today):
     api_path = os.path.join(ROOT, "api.json")
     try:
         txt = open(api_path, encoding="utf-8").read()
         txt = re.sub(r'"records_approx":\s*\d+', '"records_approx": %d' % count, txt)
         txt = re.sub(r'"records_as_of":\s*"[^"]*"', '"records_as_of": "%s"' % today, txt)
+        # FIX-02 (2026-10-02): advertise the incremental registry feed to bots.
+        if '"data/patents-index.json"' not in txt:
+            txt = txt.replace(
+                '    {\n      "path": "data/patents.jsonl",',
+                '    {\n      "path": "data/patents-index.json",\n'
+                '      "format": "json",\n'
+                '      "desc": "Incremental registry feed: newly harvested batches '
+                'and the 200 most recent additions."\n'
+                '    },\n'
+                '    {\n      "path": "data/patents.jsonl",')
         open(api_path, "w", encoding="utf-8").write(txt)
         print("refreshed api.json counts")
     except FileNotFoundError:

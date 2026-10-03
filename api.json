@@ -9,6 +9,11 @@
   "note": "Counts grow on automated schedules; re-read this file for the latest shape of the data.",
   "endpoints": [
     {
+      "path": "data/patents-index.json",
+      "format": "json",
+      "desc": "Incremental registry feed: newly harvested batches and the 200 most recent additions."
+    },
+    {
       "path": "data/patents.jsonl",
       "format": "jsonl",
       "desc": "All patent records, one JSON object per line. Keyed by publication number."

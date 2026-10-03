@@ -7,7 +7,7 @@
 <meta name="description" content="Globally Rejustered Patent Catalog: a free, searchable public index of 48,137 published patent records (numbers, titles, owners, inventors, dates, CPC classes) harvested from Google Patents. Not affiliated with the USPTO or any government agency.">
 <link rel="canonical" id="canon" href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">
 <script type="application/ld+json" id="catalog-ld">
-{"@context":"https://schema.org","@graph":[{"@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents across all CPC sections A–H.","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"}]},"numberOfItems":"48,137","dateModified":"2026-10-03","isAccessibleForFree":true},{"@type":"Dataset","name":"Globally Rejustered Patent Catalog","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","creator":{"@type":"Person","name":"Justin Addam Higgins"}}]}
+{"@context":"https://schema.org","@graph":[{"@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents across all CPC sections A–H.","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents-index.json","encodingFormat":"application/json","description":"Incremental registry feed of newly harvested patent batches"}]},"numberOfItems":"48,137","dateModified":"2026-10-03","isAccessibleForFree":true},{"@type":"Dataset","name":"Globally Rejustered Patent Catalog","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","creator":{"@type":"Person","name":"Justin Addam Higgins"}}]}
 </script>
 <script src="js/jah-talk-fallback.js"></script>
 <style>
@@ -207,6 +207,41 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 .helper-input{flex:1;min-width:0;padding:8px 10px;border:1px solid #b9c6d6;border-radius:8px;font-size:.9em}
 .helper-send{background:#16337a;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;white-space:nowrap}
 </style>
+<style>
+/* SITE-6 DIAGNOSTIC FIXES (2026-10-02) */
+/* FIX-05: persistent sticky search bar. At rest the look is unchanged; it only
+   sticks once scrolled. The A-Z bar (below) docks under it via fixStick(). */
+.searchbar { position: sticky; top: 0; z-index: 26; background: #eef2f6;
+             padding: 10px 16px 12px; border-bottom: 1px solid #d3dce6;
+             box-shadow: 0 2px 8px rgba(20,40,80,.10); }
+/* FIX-04: patent status pills — Live / Pending / Rejustered / Needs review */
+.statuspill { display: inline-block; font-size: .72em; font-weight: 800; letter-spacing: .08em;
+              text-transform: uppercase; padding: 4px 12px; border-radius: 999px;
+              margin: 8px 6px 0 0; vertical-align: middle; }
+.statuspill.live { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.statuspill.pending { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+.statuspill.rejustered { background: #e0e7ff; color: #3730a3; border: 1px solid #a5b4fc; }
+.statuspill.review { background: #fde8e8; color: #8a1f1f; border: 1px solid #fca5a5; }
+/* FIX-04: mobile card density */
+@media (max-width: 767px) {
+  .card { padding: 12px 12px; }
+  .card h3 { font-size: 1em; }
+  .card .ptools { gap: 6px; }
+}
+/* FIX-06: document readability — clean 1.6 line rhythm, high-contrast text */
+.card .abs { line-height: 1.6; color: #2b3a55; }
+.card .meta { line-height: 1.6; }
+.recview { line-height: 1.6; color: #1f2a37; }
+.recview .rvk { color: #16337a; }
+/* FIX-03: pre-rendered static tables (categories + recent filings) for bots */
+.statictable { width: 100%; border-collapse: collapse; font-size: .88em; }
+.statictable th, .statictable td { text-align: left; padding: 8px 10px;
+  border-bottom: 1px solid #d3dce6; vertical-align: top; line-height: 1.6; }
+.statictable th { color: #16337a; font-size: .8em; letter-spacing: .06em; }
+.statictable td.num { white-space: nowrap; color: #5b6b7f; }
+.statictable a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
+.statictable a:hover { text-decoration: underline; }
+</style>
 </head>
 <body>
 <nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
@@ -253,7 +288,7 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
   <div class="langrow">&#127760; Language: <span id="google_translate_element"></span></div>
   <div class="harvestline">Patent records currently indexed: <b>48,137</b><span class="sep">·</span>Harvesting: <b>ongoing</b><span class="sep">·</span>Last harvest: <b>Oct 2, 2026, 9:57 PM ET</b><span class="sep">·</span>Next harvest: <b>Oct 2, 2026, 10:27 PM ET</b> (every 30 min)</div>
 </header>
-<div class="searchwrap">
+<div class="searchbar" id="searchbar">
   <div class="searchrow">
     <input id="q" type="search" aria-label="Search patent records" placeholder="Search by patent number, title, keyword, company, or inventor&hellip;" autocomplete="off">
     <button id="go" type="button">Search</button>
@@ -265,6 +300,8 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
     <button type="button" class="modebtn" data-m="title">Title</button>
     <button type="button" class="modebtn" data-m="desc">Description</button>
   </div>
+</div>
+<div class="searchwrap">
   <div class="groups">
     <div class="gtitle">BROWSE BY GROUP</div>
     <div class="secbtns" id="secbtns"><button type="button" class="secbtn" data-s="A">A · Human necessities<span class="seccount">46,663</span><span class="secstat">Indexed · harvest in progress (A43 · class 8 of 122)</span></button><button type="button" class="secbtn" data-s="B">B · Performing operations; transporting<span class="seccount">0</span><span class="secstat">Queued · class #16 of 122 up next</span></button><button type="button" class="secbtn" data-s="C">C · Chemistry; metallurgy<span class="seccount">0</span><span class="secstat">Queued · class #52 of 122 up next</span></button><button type="button" class="secbtn" data-s="D">D · Textiles; paper<span class="seccount">0</span><span class="secstat">Queued · class #71 of 122 up next</span></button><button type="button" class="secbtn" data-s="E">E · Fixed constructions<span class="seccount">0</span><span class="secstat">Queued · class #79 of 122 up next</span></button><button type="button" class="secbtn" data-s="F">F · Mechanical engineering<span class="seccount">0</span><span class="secstat">Queued · class #86 of 122 up next</span></button><button type="button" class="secbtn" data-s="G">G · Physics<span class="seccount">0</span><span class="secstat">Queued · class #103 of 122 up next</span></button><button type="button" class="secbtn" data-s="H">H · Electricity<span class="seccount">1,474</span><span class="secstat">Indexed</span></button></div>
@@ -288,11 +325,19 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
   <div class="finder-res" id="finderres" aria-live="polite"></div>
 </div>
 <nav id="letters" aria-label="Jump by letter"></nav>
-<noscript><div class="noscript">This catalog needs JavaScript turned on to search and list patents.</div></noscript>
+<noscript><div class="noscript">The catalog's interactive search needs JavaScript turned on. The category and recent-filing tables further down this page are readable without it.</div></noscript>
 <p id="count" role="status" aria-live="polite"></p>
 <h2 class="sr-only" id="resultshead">Patent records</h2>
 <div id="results"><p class="nores" id="bootmsg"><h3>Loading the catalog index&hellip;</h3></p></div>
 <button id="more" type="button" style="display:none">Show more</button>
+<section class="infosection" id="static-cats" aria-label="Browse patent categories (static index)">
+  <h2>Browse by category</h2>
+  <div class="infocard"><table class="statictable"><tbody><tr><td><a href="#secbtns"><b>A</b> &mdash; Human necessities</a></td><td class="num">46,663 records</td></tr><tr><td><a href="#secbtns"><b>B</b> &mdash; Performing operations; transporting</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>C</b> &mdash; Chemistry; metallurgy</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>D</b> &mdash; Textiles; paper</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>E</b> &mdash; Fixed constructions</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>F</b> &mdash; Mechanical engineering</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>G</b> &mdash; Physics</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>H</b> &mdash; Electricity</a></td><td class="num">1,474 records</td></tr></tbody></table></div>
+</section>
+<section class="infosection" id="recent" aria-label="Recent patent filings (static index)">
+  <h2>Recent filings</h2>
+  <div class="infocard"><table class="statictable"><thead><tr><th>Number</th><th>Title</th><th>Published</th><th>Owner</th></tr></thead><tbody><tr><td><a href="?patent=JP7863371B2">JP7863371B2</a></td><td>Vehicle information processing device and vehicle information processing …</td><td class="num">2026-05-21</td><td>株式会社ブリッツ</td></tr><tr><td><a href="?patent=KR102967247B1">KR102967247B1</a></td><td>Method of making seasoned hot sauce</td><td class="num">2026-05-20</td><td>주식회사 에이치푸드빌</td></tr><tr><td><a href="?patent=CN116434735B">CN116434735B</a></td><td>Voice recognition method, and training method, device and equipment of acoustic …</td><td class="num">2026-05-19</td><td>京东科技信息技术有限公司</td></tr><tr><td><a href="?patent=CN117710555B">CN117710555B</a></td><td>Vector field dynamic display method and device, electronic equipment and …</td><td class="num">2026-05-19</td><td>交通运输部天津水运工程科学研究所</td></tr><tr><td><a href="?patent=US12631650B2">US12631650B2</a></td><td>Proteins targeting orthologs</td><td class="num">2026-05-19</td><td>BioAtla, Inc</td></tr><tr><td><a href="?patent=CN114264949B">CN114264949B</a></td><td>Automatic switch test equipment</td><td class="num">2026-05-15</td><td>天津华来科技股份有限公司</td></tr><tr><td><a href="?patent=AU2024203050C1">AU2024203050C1</a></td><td>Composition for modulating metabolism</td><td class="num">2026-05-14</td><td>Brightseed, Inc.</td></tr><tr><td><a href="?patent=US20260135424A1">US20260135424A1</a></td><td>Rotary electric machine</td><td class="num">2026-05-14</td><td>Mitsubishi Electric Corporation</td></tr><tr><td><a href="?patent=CN116450338B">CN116450338B</a></td><td>Method for acquiring maximum continuous resource block of GPU</td><td class="num">2026-05-12</td><td>沐曦集成电路(上海)股份有限公司</td></tr><tr><td><a href="?patent=CN117848430B">CN117848430B</a></td><td>Electromagnetic water meter capable of improving small flow measurement …</td><td class="num">2026-05-12</td><td>福建省力得自动化设备有限公司</td></tr><tr><td><a href="?patent=US12624090B2">US12624090B2</a></td><td>Method and antibody for detection of HBcAg</td><td class="num">2026-05-12</td><td>Xiamen Innodx Biotech Co., Ltd</td></tr><tr><td><a href="?patent=US12627689B2">US12627689B2</a></td><td>Large language model (LLM) powered detection reasoning solution</td><td class="num">2026-05-12</td><td>Palo Alto Networks, Inc.</td></tr><tr><td><a href="?patent=KR102963553B1">KR102963553B1</a></td><td>Low-calorie fried puffed rice and its manufacturing method</td><td class="num">2026-05-11</td><td>김경민</td></tr><tr><td><a href="?patent=CN111035839B">CN111035839B</a></td><td>A humidification tank</td><td class="num">2026-05-08</td><td>江苏鱼跃医疗设备股份有限公司</td></tr><tr><td><a href="?patent=DE102014201203B4">DE102014201203B4</a></td><td>Agricultural work vehicle with an aircraft and associated power supply</td><td class="num">2026-05-07</td><td>Deere &amp; Company</td></tr><tr><td><a href="?patent=US20260126001A1">US20260126001A1</a></td><td>Systems, apparatus, and methods for inducing enhanced radical ignition in …</td><td class="num">2026-05-07</td><td>Radical Combustion Technologies, Llc</td></tr><tr><td><a href="?patent=CA3171180C">CA3171180C</a></td><td>Fluid handling cassette for an infusion system</td><td class="num">2026-05-05</td><td>Deka Products Limited Partnership</td></tr><tr><td><a href="?patent=US12616649B2">US12616649B2</a></td><td>Composition containing plant extracts</td><td class="num">2026-05-05</td><td>Lg Household &amp; Health Care Ltd.</td></tr><tr><td><a href="?patent=US12616683B2">US12616683B2</a></td><td>Combination therapy for the treatment of gastrointestinal stromal tumors</td><td class="num">2026-05-05</td><td>Deciphera Pharmaceuticals, Llc</td></tr><tr><td><a href="?patent=CN117718886B">CN117718886B</a></td><td>Molecular sieve production grinding device</td><td class="num">2026-05-01</td><td>启东海奥华环保科技有限公司</td></tr><tr><td><a href="?patent=CN121943623A">CN121943623A</a></td><td>Hip joint adjustable wearable lower limb exoskeleton robot</td><td class="num">2026-05-01</td><td>北部湾大学</td></tr><tr><td><a href="?patent=CN121952672A">CN121952672A</a></td><td>A multi-point safety monitoring device for tunnel construction in urban areas</td><td class="num">2026-05-01</td><td>江西缔益建设工程有限公司</td></tr><tr><td><a href="?patent=AU2026202728A1">AU2026202728A1</a></td><td>Wind-powered computing buoy</td><td class="num">2026-04-30</td><td>Lone Gull Holdings, Ltd.</td></tr><tr><td><a href="?patent=US20260118453A1">US20260118453A1</a></td><td>Quantum sensor interposer packaging (qsip) with smart grid monitoring</td><td class="num">2026-04-30</td><td>University Of Southern California</td></tr><tr><td><a href="?patent=US20260118758A1">US20260118758A1</a></td><td>Salt, acid generator, resin, resist composition and method for producing resist …</td><td class="num">2026-04-30</td><td>Sumitomo Chemical Company, Limited</td></tr><tr><td><a href="?patent=KR102958399B1">KR102958399B1</a></td><td>Fishpaste bread</td><td class="num">2026-04-29</td><td>동아대학교 산학협력단</td></tr><tr><td><a href="?patent=KR102959240B1">KR102959240B1</a></td><td>Compositions comprising amino acids for prevention and/or treatment of cancer</td><td class="num">2026-04-29</td><td>프로페셔날 디에테틱스 에스.피.에이.</td></tr><tr><td><a href="?patent=CN115244421B">CN115244421B</a></td><td>Object size estimation using camera maps and/or radar information</td><td class="num">2026-04-28</td><td>高通股份有限公司</td></tr><tr><td><a href="?patent=US12615276B2">US12615276B2</a></td><td>Anomaly detection device and anomaly detection method</td><td class="num">2026-04-28</td><td>Panasonic Intellectual Property Corporation Of America</td></tr><tr><td><a href="?patent=US20260109896A1">US20260109896A1</a></td><td>Proppant particles formed from fluid coke and flexicoke, fracturing fluids …</td><td class="num">2026-04-23</td><td>ExxonMobil Technology and Engineering Company</td></tr><tr><td><a href="?patent=US20260111255A1">US20260111255A1</a></td><td>Network interface card configuration method and apparatus, electronic device, …</td><td class="num">2026-04-23</td><td>Suzhou Metabrain Intelligent Technology Co., Ltd.</td></tr><tr><td><a href="?patent=CN109995629B">CN109995629B</a></td><td>Improved end-to-end controller protection and message authentication</td><td class="num">2026-04-21</td><td>福特全球技术公司</td></tr><tr><td><a href="?patent=CN111162428B">CN111162428B</a></td><td>Double-headed terminal insert device</td><td class="num">2026-04-21</td><td>深圳市大森林智能自动科技有限公司</td></tr><tr><td><a href="?patent=CN116461085B">CN116461085B</a></td><td>Calibration method for 3D modeling apparatus and nozzles used in 3D modeling</td><td class="num">2026-04-21</td><td>精工爱普生株式会社</td></tr><tr><td><a href="?patent=CN117902700B">CN117902700B</a></td><td>An industrial wastewater filtration device</td><td class="num">2026-04-21</td><td>辽宁晁威能源环保科技有限公司</td></tr><tr><td><a href="?patent=CN121908714A">CN121908714A</a></td><td>MicroLED huge transfer device</td><td class="num">2026-04-21</td><td>绍兴圆炬科技有限公司</td></tr><tr><td><a href="?patent=JP7848480B2">JP7848480B2</a></td><td>Information processing device and program</td><td class="num">2026-04-21</td><td>セイコーエプソン株式会社</td></tr><tr><td><a href="?patent=US12605178B2">US12605178B2</a></td><td>Discectomy tool</td><td class="num">2026-04-21</td><td>Combination Spine, Inc.</td></tr><tr><td><a href="?patent=US12609988B2">US12609988B2</a></td><td>System and method for server based control</td><td class="num">2026-04-21</td><td>May Patents Ltd.</td></tr><tr><td><a href="?patent=JP7847940B2">JP7847940B2</a></td><td>Use of substituted aminopropionic acid compounds in the treatment of SARS-CoV-2 …</td><td class="num">2026-04-20</td><td>アカデミー オブ ミリタリー メディカル サイエンシズ</td></tr></tbody></table></div>
+</section>
 <button id="totop" type="button" title="Back to top" aria-label="Back to top">&#8593;</button>
 <section class="infosection" id="data" aria-label="Data and downloads">
   <h2>Data &amp; downloads</h2>
@@ -302,6 +347,7 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
     catalog ID and record hash), alongside the catalog metadata and the XML sitemaps.</p>
     <p><a href="data/patents.csv" download>Download the catalog CSV</a> (48,137 records) &middot;
     <a href="data/meta.json">Catalog metadata (JSON)</a> &middot;
+    <a href="data/patents-index.json">Registry feed (JSON)</a> &middot;
     <a href="sitemap.xml">Sitemap</a> &middot;
     <a href="sitemap-index.xml">Full sitemap index</a></p>
     <div class="statgrid">
@@ -420,6 +466,22 @@ function apply() {
   state.shown = 40;
   render();
 }
+function statusPill(r) {
+  /* FIX-04 (2026-10-02): status pills. Live = granted patent, in force as
+     recorded; Pending = published application awaiting a grant decision;
+     Rejustered = catalog-normalized record whose source did not specify a
+     type; Needs review = flagged record. */
+  var t = r[10], cls2, label, tip;
+  if (r[15]) { cls2 = "review"; label = "Needs review";
+    tip = "This record was flagged for review — see the full record for details."; }
+  else if (t === "Granted patent") { cls2 = "live"; label = "Live";
+    tip = "Granted patent — in force as recorded in the source."; }
+  else if (t === "Published patent application") { cls2 = "pending"; label = "Pending";
+    tip = "Published patent application — awaiting a grant decision."; }
+  else { cls2 = "rejustered"; label = "Rejustered";
+    tip = "Rejustered by the catalog: normalized, hashed and indexed — the source did not specify a record type."; }
+  return '<span class="statuspill ' + cls2 + '" title="' + esc(tip) + '">' + label + "</span>";
+}
 function card(idx) {
   var r = DATA[idx];
   var num = esc(r[0]), title = esc(r[1] || "(record title missing — under review)");
@@ -430,7 +492,6 @@ function card(idx) {
   var cls = esc((CLASS_NAMES[r[5]] || r[5] || "General") + (r[5] ? " (" + r[5] + ")" : ""));
   var link = "https://patents.google.com/patent/" + encodeURIComponent(r[0]) + "/";
   var perma = "?patent=" + encodeURIComponent(r[0]);
-  var quar = r[15] ? '<div><span class="tag" style="background:#fde8e8;color:#8a1f1f">Record needs review</span></div>' : "";
   var opened = state.opened[r[9]];
   var h = '<div class="card" id="p' + idx + '" data-letter="' + r[14] + '">' +
     '<div class="num">' + num + ' &nbsp;·&nbsp; ' + esc(r[9]) + '</div>' +
@@ -439,8 +500,7 @@ function card(idx) {
     (assignee ? "Owner: " + esc(assignee) + "<br>" : "") +
     (inventor ? "Inventor: " + esc(inventor) + "<br>" : "") +
     (dates ? dates : "") + '</div>' +
-    '<div><span class="rtype">' + esc(r[10]) + '</span> <span class="tag">' + cls + "</span></div>" +
-    quar +
+    '<div><span class="rtype">' + esc(r[10]) + '</span> ' + statusPill(r) + ' <span class="tag">' + cls + "</span></div>" +
     (r[2] ? '<div class="abs">' + esc(r[2]) + "</div>" : "") +
     '<button class="toggle" type="button" data-open="' + idx + '">' +
       (opened ? "Hide full record" : "View full patent text") + "</button>" +
@@ -546,6 +606,8 @@ function openRecord(idx) {
              family: r[11], rtype: r[10], cpc: r[5] };
     }
     state.opened[key] = fr;
+    /* FIX-01: refresh the detail-page Patent schema with the full record's dates */
+    setRecordLD(r, r[0], fr);
     var b2 = document.getElementById("rv" + idx);
     if (b2) b2.innerHTML = recviewHTML(fr);
   });
@@ -817,24 +879,49 @@ function copyText2(t, btn){
     navigator.clipboard.writeText(t).then(done, fallback);
   } else fallback();
 }
-/* ---- per-record machine readability: JSON-LD Patent, title, canonical ---- */
-function setRecordLD(r, pub) {
+/* ---- per-record machine readability: JSON-LD Patent, title, canonical ----
+   FIX-01 (2026-10-02): full Patent schema on detail views — patent number,
+   claim-summary note, filing/grant dates, inventor + catalog attribution.
+   Honesty rules: the harvested public records keep their OWN inventors; the
+   catalog/index curation is attributed to Justin Addam Higgins as provider.
+   Claim-level text is not held in this catalog's records — stated plainly. */
+function setRecordLD(r, pub, extra) {
   try {
     var old = document.getElementById("patent-ld");
     if (old) old.remove();
+    var props = [
+      { "@type": "PropertyValue", "name": "catalog ID", "value": r[9] || "" },
+      { "@type": "PropertyValue", "name": "record type", "value": r[10] || "" },
+      { "@type": "PropertyValue", "name": "CPC classification", "value": r[5] || "" },
+      { "@type": "PropertyValue", "name": "patent family", "value": r[11] || "" },
+      { "@type": "PropertyValue", "name": "country", "value": r[12] || "" },
+      { "@type": "PropertyValue", "name": "kind code", "value": r[13] || "" },
+      { "@type": "PropertyValue", "name": "claim summary",
+        "value": "Claim-level text is not held in this catalog's record — see the full patent text for the claims." }
+    ];
     var obj = {
       "@context": "https://schema.org", "@type": "Patent",
       "name": r[1] || pub,
       "identifier": r[0] || pub,
+      "patentNumber": r[0] || pub,
       "url": "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/?patent=" +
              encodeURIComponent(r[0] || pub),
-      "isAccessibleForFree": true
+      "isAccessibleForFree": true,
+      "provider": { "@type": "Person", "name": "Justin Addam Higgins" },
+      "additionalProperty": props
     };
     if (r[6]) obj.datePublished = r[6];
     if (r[2]) obj.description = r[2];
     if (r[3]) obj.creator = { "@type": "Person", "name": r[3] };
     if (r[4]) obj.copyrightHolder = { "@type": "Organization", "name": r[4] };
-    if (r[9]) obj.additionalProperty = { "@type": "PropertyValue", "name": "catalog ID", "value": r[9] };
+    if (extra) {
+      if (extra.filing_date) props.push(
+        { "@type": "PropertyValue", "name": "filing date", "value": extra.filing_date });
+      if (extra.grant_date) props.push(
+        { "@type": "PropertyValue", "name": "grant date", "value": extra.grant_date });
+      if (extra.priority_date) props.push(
+        { "@type": "PropertyValue", "name": "priority date", "value": extra.priority_date });
+    }
     var sc = document.createElement("script");
     sc.type = "application/ld+json"; sc.id = "patent-ld";
     sc.textContent = JSON.stringify(obj);
@@ -1143,6 +1230,23 @@ function googleTranslateElementInit() {
       if (d) d.removeAttribute("open");
     }
   } catch (e) {}
+})();
+/* FIX-05 (2026-10-02): the sticky search bar and the sticky A-Z bar must not
+   overlap — while the search bar is stuck, the letters bar docks beneath it. */
+(function () {
+  var sb = document.getElementById("searchbar"), lt = document.getElementById("letters");
+  if (!sb || !lt) return;
+  function fixStick() {
+    try {
+      var r = sb.getBoundingClientRect();
+      lt.style.top = (r.top <= 1) ? Math.ceil(r.height) + "px" : "0px";
+    } catch (e) {}
+  }
+  if (window.addEventListener) {
+    window.addEventListener("scroll", fixStick, { passive: true });
+    window.addEventListener("resize", fixStick);
+  }
+  fixStick();
 })();
 </script>
 <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>

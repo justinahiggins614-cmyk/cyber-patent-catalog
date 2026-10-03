@@ -1,4 +1,5 @@
 import json
+import urllib.parse
 
 
 def esc_html(s):
@@ -63,7 +64,37 @@ SECTION_NAMES = {
 }
 
 
-def build_html(meta, harv=None):
+def static_sections(enriched, meta):
+    """FIX-03 (2026-10-02): pre-rendered static HTML for bot ingestion —
+    category table (8 CPC sections) + recent-filings table (top 40 by
+    publication date), all with real ?patent= deep links."""
+    sections = meta.get("sections", {})
+    rows = []
+    for s in "ABCDEFGH":
+        n = sections.get(s, 0)
+        rows.append(
+            '<tr><td><a href="#secbtns"><b>%s</b> &mdash; %s</a></td>'
+            '<td class="num">%s records</td></tr>'
+            % (s, esc_html(SECTION_NAMES[s]), f"{n:,}"))
+    cats = ('<table class="statictable"><tbody>' + "".join(rows) + "</tbody></table>")
+
+    dated = [e for e in enriched if e.get("publication_date")]
+    dated.sort(key=lambda e: e["publication_date"], reverse=True)
+    rrows = []
+    for e in dated[:40]:
+        pub = e["pub"]
+        url = "?patent=" + urllib.parse.quote(pub, safe="")
+        rrows.append(
+            '<tr><td><a href="%s">%s</a></td><td>%s</td><td class="num">%s</td><td>%s</td></tr>'
+            % (url, esc_html(pub), esc_html(e["title"] or "(title missing)"),
+               esc_html(e["publication_date"] or ""), esc_html(e["assignee"] or "")))
+    recent = ('<table class="statictable">'
+              '<thead><tr><th>Number</th><th>Title</th><th>Published</th><th>Owner</th></tr></thead>'
+              '<tbody>' + "".join(rrows) + "</tbody></table>")
+    return cats, recent
+
+
+def build_html(meta, harv=None, enriched=None):
     count = meta["record_count"]
     today = meta["last_updated"]
     sections = meta["sections"]
@@ -111,6 +142,9 @@ def build_html(meta, harv=None):
         "is a real harvested public record."
     )
 
+    # FIX-03 (2026-10-02): static category + recent-filing tables for bots.
+    static_cats, static_recent = static_sections(enriched or [], meta)
+
     html = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,7 +154,7 @@ def build_html(meta, harv=None):
 <meta name="description" content="Globally Rejustered Patent Catalog: a free, searchable public index of __COUNT__ published patent records (numbers, titles, owners, inventors, dates, CPC classes) harvested from Google Patents. Not affiliated with the USPTO or any government agency.">
 <link rel="canonical" id="canon" href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">
 <script type="application/ld+json" id="catalog-ld">
-{"@context":"https://schema.org","@graph":[{"@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents across all CPC sections A–H.","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"}]},"numberOfItems":"__COUNT__","dateModified":"__DATE__","isAccessibleForFree":true},{"@type":"Dataset","name":"Globally Rejustered Patent Catalog","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","creator":{"@type":"Person","name":"Justin Addam Higgins"}}]}
+{"@context":"https://schema.org","@graph":[{"@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents across all CPC sections A–H.","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents-index.json","encodingFormat":"application/json","description":"Incremental registry feed of newly harvested patent batches"}]},"numberOfItems":"__COUNT__","dateModified":"__DATE__","isAccessibleForFree":true},{"@type":"Dataset","name":"Globally Rejustered Patent Catalog","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","creator":{"@type":"Person","name":"Justin Addam Higgins"}}]}
 </script>
 <script src="js/jah-talk-fallback.js"></script>
 <style>
@@ -320,6 +354,41 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 .helper-input{flex:1;min-width:0;padding:8px 10px;border:1px solid #b9c6d6;border-radius:8px;font-size:.9em}
 .helper-send{background:#16337a;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;white-space:nowrap}
 </style>
+<style>
+/* SITE-6 DIAGNOSTIC FIXES (2026-10-02) */
+/* FIX-05: persistent sticky search bar. At rest the look is unchanged; it only
+   sticks once scrolled. The A-Z bar (below) docks under it via fixStick(). */
+.searchbar { position: sticky; top: 0; z-index: 26; background: #eef2f6;
+             padding: 10px 16px 12px; border-bottom: 1px solid #d3dce6;
+             box-shadow: 0 2px 8px rgba(20,40,80,.10); }
+/* FIX-04: patent status pills — Live / Pending / Rejustered / Needs review */
+.statuspill { display: inline-block; font-size: .72em; font-weight: 800; letter-spacing: .08em;
+              text-transform: uppercase; padding: 4px 12px; border-radius: 999px;
+              margin: 8px 6px 0 0; vertical-align: middle; }
+.statuspill.live { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.statuspill.pending { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+.statuspill.rejustered { background: #e0e7ff; color: #3730a3; border: 1px solid #a5b4fc; }
+.statuspill.review { background: #fde8e8; color: #8a1f1f; border: 1px solid #fca5a5; }
+/* FIX-04: mobile card density */
+@media (max-width: 767px) {
+  .card { padding: 12px 12px; }
+  .card h3 { font-size: 1em; }
+  .card .ptools { gap: 6px; }
+}
+/* FIX-06: document readability — clean 1.6 line rhythm, high-contrast text */
+.card .abs { line-height: 1.6; color: #2b3a55; }
+.card .meta { line-height: 1.6; }
+.recview { line-height: 1.6; color: #1f2a37; }
+.recview .rvk { color: #16337a; }
+/* FIX-03: pre-rendered static tables (categories + recent filings) for bots */
+.statictable { width: 100%; border-collapse: collapse; font-size: .88em; }
+.statictable th, .statictable td { text-align: left; padding: 8px 10px;
+  border-bottom: 1px solid #d3dce6; vertical-align: top; line-height: 1.6; }
+.statictable th { color: #16337a; font-size: .8em; letter-spacing: .06em; }
+.statictable td.num { white-space: nowrap; color: #5b6b7f; }
+.statictable a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
+.statictable a:hover { text-decoration: underline; }
+</style>
 </head>
 <body>
 <nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span>
@@ -366,7 +435,7 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
   <div class="langrow">&#127760; Language: <span id="google_translate_element"></span></div>
   <div class="harvestline">__HARVEST_LINE__</div>
 </header>
-<div class="searchwrap">
+<div class="searchbar" id="searchbar">
   <div class="searchrow">
     <input id="q" type="search" aria-label="Search patent records" placeholder="Search by patent number, title, keyword, company, or inventor&hellip;" autocomplete="off">
     <button id="go" type="button">Search</button>
@@ -378,6 +447,8 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
     <button type="button" class="modebtn" data-m="title">Title</button>
     <button type="button" class="modebtn" data-m="desc">Description</button>
   </div>
+</div>
+<div class="searchwrap">
   <div class="groups">
     <div class="gtitle">BROWSE BY GROUP</div>
     <div class="secbtns" id="secbtns">__SECTIONS__</div>
@@ -401,11 +472,19 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
   <div class="finder-res" id="finderres" aria-live="polite"></div>
 </div>
 <nav id="letters" aria-label="Jump by letter"></nav>
-<noscript><div class="noscript">This catalog needs JavaScript turned on to search and list patents.</div></noscript>
+<noscript><div class="noscript">The catalog's interactive search needs JavaScript turned on. The category and recent-filing tables further down this page are readable without it.</div></noscript>
 <p id="count" role="status" aria-live="polite"></p>
 <h2 class="sr-only" id="resultshead">Patent records</h2>
 <div id="results"><p class="nores" id="bootmsg"><h3>Loading the catalog index&hellip;</h3></p></div>
 <button id="more" type="button" style="display:none">Show more</button>
+<section class="infosection" id="static-cats" aria-label="Browse patent categories (static index)">
+  <h2>Browse by category</h2>
+  <div class="infocard">__STATIC_CATS__</div>
+</section>
+<section class="infosection" id="recent" aria-label="Recent patent filings (static index)">
+  <h2>Recent filings</h2>
+  <div class="infocard">__STATIC_RECENT__</div>
+</section>
 <button id="totop" type="button" title="Back to top" aria-label="Back to top">&#8593;</button>
 <section class="infosection" id="data" aria-label="Data and downloads">
   <h2>Data &amp; downloads</h2>
@@ -415,6 +494,7 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
     catalog ID and record hash), alongside the catalog metadata and the XML sitemaps.</p>
     <p><a href="data/patents.csv" download>Download the catalog CSV</a> (__COUNT__ records) &middot;
     <a href="data/meta.json">Catalog metadata (JSON)</a> &middot;
+    <a href="data/patents-index.json">Registry feed (JSON)</a> &middot;
     <a href="sitemap.xml">Sitemap</a> &middot;
     <a href="sitemap-index.xml">Full sitemap index</a></p>
     <div class="statgrid">
@@ -533,6 +613,22 @@ function apply() {
   state.shown = 40;
   render();
 }
+function statusPill(r) {
+  /* FIX-04 (2026-10-02): status pills. Live = granted patent, in force as
+     recorded; Pending = published application awaiting a grant decision;
+     Rejustered = catalog-normalized record whose source did not specify a
+     type; Needs review = flagged record. */
+  var t = r[10], cls2, label, tip;
+  if (r[15]) { cls2 = "review"; label = "Needs review";
+    tip = "This record was flagged for review — see the full record for details."; }
+  else if (t === "Granted patent") { cls2 = "live"; label = "Live";
+    tip = "Granted patent — in force as recorded in the source."; }
+  else if (t === "Published patent application") { cls2 = "pending"; label = "Pending";
+    tip = "Published patent application — awaiting a grant decision."; }
+  else { cls2 = "rejustered"; label = "Rejustered";
+    tip = "Rejustered by the catalog: normalized, hashed and indexed — the source did not specify a record type."; }
+  return '<span class="statuspill ' + cls2 + '" title="' + esc(tip) + '">' + label + "</span>";
+}
 function card(idx) {
   var r = DATA[idx];
   var num = esc(r[0]), title = esc(r[1] || "(record title missing — under review)");
@@ -543,7 +639,6 @@ function card(idx) {
   var cls = esc((CLASS_NAMES[r[5]] || r[5] || "General") + (r[5] ? " (" + r[5] + ")" : ""));
   var link = "https://patents.google.com/patent/" + encodeURIComponent(r[0]) + "/";
   var perma = "?patent=" + encodeURIComponent(r[0]);
-  var quar = r[15] ? '<div><span class="tag" style="background:#fde8e8;color:#8a1f1f">Record needs review</span></div>' : "";
   var opened = state.opened[r[9]];
   var h = '<div class="card" id="p' + idx + '" data-letter="' + r[14] + '">' +
     '<div class="num">' + num + ' &nbsp;·&nbsp; ' + esc(r[9]) + '</div>' +
@@ -552,8 +647,7 @@ function card(idx) {
     (assignee ? "Owner: " + esc(assignee) + "<br>" : "") +
     (inventor ? "Inventor: " + esc(inventor) + "<br>" : "") +
     (dates ? dates : "") + '</div>' +
-    '<div><span class="rtype">' + esc(r[10]) + '</span> <span class="tag">' + cls + "</span></div>" +
-    quar +
+    '<div><span class="rtype">' + esc(r[10]) + '</span> ' + statusPill(r) + ' <span class="tag">' + cls + "</span></div>" +
     (r[2] ? '<div class="abs">' + esc(r[2]) + "</div>" : "") +
     '<button class="toggle" type="button" data-open="' + idx + '">' +
       (opened ? "Hide full record" : "View full patent text") + "</button>" +
@@ -659,6 +753,8 @@ function openRecord(idx) {
              family: r[11], rtype: r[10], cpc: r[5] };
     }
     state.opened[key] = fr;
+    /* FIX-01: refresh the detail-page Patent schema with the full record's dates */
+    setRecordLD(r, r[0], fr);
     var b2 = document.getElementById("rv" + idx);
     if (b2) b2.innerHTML = recviewHTML(fr);
   });
@@ -930,24 +1026,49 @@ function copyText2(t, btn){
     navigator.clipboard.writeText(t).then(done, fallback);
   } else fallback();
 }
-/* ---- per-record machine readability: JSON-LD Patent, title, canonical ---- */
-function setRecordLD(r, pub) {
+/* ---- per-record machine readability: JSON-LD Patent, title, canonical ----
+   FIX-01 (2026-10-02): full Patent schema on detail views — patent number,
+   claim-summary note, filing/grant dates, inventor + catalog attribution.
+   Honesty rules: the harvested public records keep their OWN inventors; the
+   catalog/index curation is attributed to Justin Addam Higgins as provider.
+   Claim-level text is not held in this catalog's records — stated plainly. */
+function setRecordLD(r, pub, extra) {
   try {
     var old = document.getElementById("patent-ld");
     if (old) old.remove();
+    var props = [
+      { "@type": "PropertyValue", "name": "catalog ID", "value": r[9] || "" },
+      { "@type": "PropertyValue", "name": "record type", "value": r[10] || "" },
+      { "@type": "PropertyValue", "name": "CPC classification", "value": r[5] || "" },
+      { "@type": "PropertyValue", "name": "patent family", "value": r[11] || "" },
+      { "@type": "PropertyValue", "name": "country", "value": r[12] || "" },
+      { "@type": "PropertyValue", "name": "kind code", "value": r[13] || "" },
+      { "@type": "PropertyValue", "name": "claim summary",
+        "value": "Claim-level text is not held in this catalog's record — see the full patent text for the claims." }
+    ];
     var obj = {
       "@context": "https://schema.org", "@type": "Patent",
       "name": r[1] || pub,
       "identifier": r[0] || pub,
+      "patentNumber": r[0] || pub,
       "url": "https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/?patent=" +
              encodeURIComponent(r[0] || pub),
-      "isAccessibleForFree": true
+      "isAccessibleForFree": true,
+      "provider": { "@type": "Person", "name": "Justin Addam Higgins" },
+      "additionalProperty": props
     };
     if (r[6]) obj.datePublished = r[6];
     if (r[2]) obj.description = r[2];
     if (r[3]) obj.creator = { "@type": "Person", "name": r[3] };
     if (r[4]) obj.copyrightHolder = { "@type": "Organization", "name": r[4] };
-    if (r[9]) obj.additionalProperty = { "@type": "PropertyValue", "name": "catalog ID", "value": r[9] };
+    if (extra) {
+      if (extra.filing_date) props.push(
+        { "@type": "PropertyValue", "name": "filing date", "value": extra.filing_date });
+      if (extra.grant_date) props.push(
+        { "@type": "PropertyValue", "name": "grant date", "value": extra.grant_date });
+      if (extra.priority_date) props.push(
+        { "@type": "PropertyValue", "name": "priority date", "value": extra.priority_date });
+    }
     var sc = document.createElement("script");
     sc.type = "application/ld+json"; sc.id = "patent-ld";
     sc.textContent = JSON.stringify(obj);
@@ -1257,6 +1378,23 @@ function googleTranslateElementInit() {
     }
   } catch (e) {}
 })();
+/* FIX-05 (2026-10-02): the sticky search bar and the sticky A-Z bar must not
+   overlap — while the search bar is stuck, the letters bar docks beneath it. */
+(function () {
+  var sb = document.getElementById("searchbar"), lt = document.getElementById("letters");
+  if (!sb || !lt) return;
+  function fixStick() {
+    try {
+      var r = sb.getBoundingClientRect();
+      lt.style.top = (r.top <= 1) ? Math.ceil(r.height) + "px" : "0px";
+    } catch (e) {}
+  }
+  if (window.addEventListener) {
+    window.addEventListener("scroll", fixStick, { passive: true });
+    window.addEventListener("resize", fixStick);
+  }
+  fixStick();
+})();
 </script>
 <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
@@ -1269,6 +1407,8 @@ function googleTranslateElementInit() {
                 .replace("__HARVEST_LINE_TXT__", esc_html(hl_txt))
                 .replace("__SECTIONS__", sec_html)
                 .replace("__COVERAGE_NOTE__", coverage_note)
+                .replace("__STATIC_CATS__", static_cats)
+                .replace("__STATIC_RECENT__", static_recent)
                 .replace("__CLASSES__", class_json)
                 .replace("__SECTIONS_JSON__", section_names)
                 .replace("__META__", meta_json))
