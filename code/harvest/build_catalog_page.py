@@ -119,8 +119,11 @@ def harvest_status(meta):
         elif s == cur_letter and cur_class:
             stat = "Processing (%s · class %d of %d)" % (cur_class, pos, total)
         else:
+            # Gemini fix (2026-10-02): queued sections say plainly that they
+            # have not been harvested yet — a 0 must never read as "no patents".
             qn = first_of.get(s)
-            stat = ("Queued · class #%d of %d up next" % (qn, total)) if qn else "Queued"
+            stat = ("This section has not been harvested yet · class #%d of %d up next"
+                    % (qn, total)) if qn else "This section has not been harvested yet"
         harv["sections"][s] = {"stat": stat}
 
     def fmt_et(ts):

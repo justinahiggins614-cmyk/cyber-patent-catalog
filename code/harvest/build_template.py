@@ -110,9 +110,10 @@ def build_html(meta, harv=None, enriched=None):
         st = sec_status.get(s, {})
         stat = st.get("stat", "")
         sec_buttons.append(
-            '<button type="button" class="secbtn" data-s="%s">%s · %s'
+            '<button type="button" class="secbtn%s" data-s="%s">%s · %s'
             '<span class="seccount">%s</span>'
-            '<span class="secstat">%s</span></button>' % (s, s, SECTION_NAMES[s], f"{n:,}", esc_html(stat)))
+            '<span class="secstat">%s</span></button>' % (
+                " queued" if n == 0 else "", s, s, SECTION_NAMES[s], f"{n:,}", esc_html(stat)))
     sec_html = "".join(sec_buttons)
 
     # Harvest status line: kept as its own line, visually separate from the
@@ -218,6 +219,14 @@ def build_html(meta, harv=None, enriched=None):
   .secbtn.active { background: #16337a; border-color: #16337a; color: #fff; }
   .secbtn .seccount { display: block; font-size: .78em; font-weight: 400; opacity: .8; }
   .secbtn .secstat { display: block; font-size: .72em; font-weight: 400; opacity: .75; font-style: italic; margin-top: 2px; }
+  .secbtn.queued { border-style: dashed; }
+  .grantnote { max-width: 860px; margin: 6px auto 0; padding: 8px 16px; text-align: center;
+               font-size: .82em; font-weight: 600; color: #7a1f1f;
+               background: #fdf2f2; border: 1px solid #f3c1c1; border-radius: 8px;
+               line-height: 1.5; }
+  .card .prov { font-size: .78em; color: #5b6b7f; margin-top: 8px; line-height: 1.6; }
+  .card .prov .hash { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .card .prov a { color: #1d4ed8; font-weight: 600; }
   .filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
              margin: 12px 0 4px; }
   .filters button { padding: 8px 14px; border-radius: 999px; border: 1px solid #9fb0c6;
@@ -423,8 +432,10 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
   <div class="seal">&#167;</div>
   <p class="eyebrow">PUBLIC RECORDS INDEX</p>
   <h1>Globally Rejustered Patent Catalog</h1>
-  <p class="sub">A comprehensive public index of published patent records &mdash;
-  every field of invention, from software to medicine to engineering &mdash; fully searchable.</p>
+  <p class="sub">A growing public index of published patent records &mdash;
+  every field of invention, from software to medicine to engineering &mdash; fully searchable.
+  Harvesting is ongoing on a 30-minute cycle, so the collection gets larger every day &mdash;
+  it is an indexed collection, not the complete universe of patents.</p>
   <details class="stattoggle" open><summary class="stattoggle-s">CATALOG STATS</summary>
   <div class="stats">
     <span class="chip"><b id="chipcount">__COUNT__</b> patents</span>
@@ -474,6 +485,8 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 <nav id="letters" aria-label="Jump by letter"></nav>
 <noscript><div class="noscript">The catalog's interactive search needs JavaScript turned on. The category and recent-filing tables further down this page are readable without it.</div></noscript>
 <p id="count" role="status" aria-live="polite"></p>
+<p class="grantnote">This catalog does not grant, own, or validate patents &mdash;
+it is an independent index of public patent records.</p>
 <h2 class="sr-only" id="resultshead">Patent records</h2>
 <div id="results"><p class="nores" id="bootmsg"><h3>Loading the catalog index&hellip;</h3></p></div>
 <button id="more" type="button" style="display:none">Show more</button>
@@ -648,6 +661,9 @@ function card(idx) {
     (inventor ? "Inventor: " + esc(inventor) + "<br>" : "") +
     (dates ? dates : "") + '</div>' +
     '<div><span class="rtype">' + esc(r[10]) + '</span> ' + statusPill(r) + ' <span class="tag">' + cls + "</span></div>" +
+    '<div class="prov">Source: Google Patents &nbsp;·&nbsp; Record hash: <span class="hash">' +
+      esc(r[16] || "n/a") + '</span> &nbsp;·&nbsp; <a href="' + link +
+      '" target="_blank" rel="noopener">Original record &#8594;</a></div>' +
     (r[2] ? '<div class="abs">' + esc(r[2]) + "</div>" : "") +
     '<button class="toggle" type="button" data-open="' + idx + '">' +
       (opened ? "Hide full record" : "View full patent text") + "</button>" +
@@ -790,6 +806,21 @@ function render() {
     state.shown < filtered.length ? "block" : "none";
 }
 function noresHTML() {
+  /* Gemini fix (2026-10-02): a queued section must never read as "no patents
+     exist" — say plainly that it has not been harvested yet. */
+  var sec = state.section;
+  if (sec && typeof META_BAKED !== "undefined" && META_BAKED && META_BAKED.sections &&
+      (META_BAKED.sections[sec] || 0) === 0) {
+    var sname = (typeof SECTION_NAMES !== "undefined" && SECTION_NAMES[sec]) || "";
+    return '<div class="nores"><h3>This section has not been harvested yet</h3>' +
+      '<p>Section ' + esc(sec) + (sname ? " (" + esc(sname) + ")" : "") +
+      ' is queued for harvest — the harvester works through the CPC classes in order and this ' +
+      'section will fill in automatically. A section showing 0 records means "not yet harvested", ' +
+      'never "no patents exist".</p>' +
+      '<div class="alts">' +
+      '<button type="button" data-alt="clear">Clear filter &amp; browse all</button>' +
+      "</div></div>";
+  }
   var q = esc(state.q.trim() || "this search");
   return '<div class="nores"><h3>No matching patent records found</h3>' +
     '<p>Nothing in the catalog matched &ldquo;' + q + "&rdquo;. " +
