@@ -4,7 +4,7 @@
   "creator": "Justin Addam Higgins (JAH)",
   "description": "A growing independent index of public patent records harvested from Google Patents. Partial CPC coverage — see data/meta.json harvest_scope for harvested vs queued classes.",
   "for_bots": "Machine-readable manifest. Humans use the site above; bots, scrapers, and AI assistants should use the endpoints below \u2014 plain JSON/JSONL over HTTPS, no JavaScript needed.",
-  "records_approx": 56190,
+  "records_approx": 56445,
   "records_as_of": "2026-10-03",
   "catalog_status": "INDEPENDENT_PUBLIC_RECORD_INDEX",
   "government_affiliation": "NONE",
