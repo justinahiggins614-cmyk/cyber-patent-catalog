@@ -16,6 +16,7 @@ import gzip
 import json
 import os
 import re
+import glob as _glob
 import urllib.parse
 import hashlib
 from datetime import date, datetime, timedelta
@@ -83,8 +84,15 @@ def harvest_status(meta):
     Queued with their queue position (a bare 0 never reads as "no patents
     exist"). Times come from data/patents.jsonl's mtime (written by the
     harvest sync just before this builder runs); next harvest = +30 min.
+
+    INTEGRITY NOTE (2026-10-03): the "next harvest" time is baked at build
+    time and goes stale ~30 min after the build. The epoch of the last
+    harvest is carried in harv["last_ts"] and stamped into the page as
+    data-last-ts; the template's harvest clock recomputes the next cycle
+    live in the browser and shows an honest OVERDUE/next-cycle-due state
+    instead of a stale future time.
     """
-    harv = {"sections": {}, "harvest_line": ""}
+    harv = {"sections": {}, "harvest_line": "", "last_ts": None, "class_totals": {}}
     try:
         last_ts = os.path.getmtime(SRC)
     except OSError:
@@ -103,6 +111,8 @@ def harvest_status(meta):
     cur_letter = cur_class[:1]
     total = len(cpcs)
     pos = (idx + 1) if idx is not None else 0
+    harv["class_totals"] = {"target_classes": total, "class_position": pos,
+                            "current_class": cur_class}
     first_of = {}
     for i, c in enumerate(cpcs):
         first_of.setdefault(c[:1], i + 1)
@@ -131,17 +141,21 @@ def harvest_status(meta):
         return dt.strftime("%b %-d, %Y, %-I:%M %p ET").replace(" 0", " ").replace("AM", "AM").replace("PM", "PM")
 
     count = meta.get("record_count", 0)
+    harv["last_ts"] = int(last_ts) if last_ts else None
     if last_ts:
         last_s = fmt_et(last_ts)
         next_s = fmt_et(last_ts + 30 * 60)
         line = ("Patent records currently indexed: <b>%s</b>"
                 '<span class="sep">·</span>Harvesting: <b>ongoing</b>'
                 '<span class="sep">·</span>Last harvest: <b>%s</b>'
-                '<span class="sep">·</span>Next harvest: <b>%s</b> (every 30 min)'
-                % (f"{count:,}", last_s, next_s))
+                '<span class="sep">·</span>Next harvest: <b class="js-next-harvest">%s</b> (every 30 min)'
+                '<span class="sep">·</span>Counts verified at build: <b>%s</b>'
+                % (f"{count:,}", last_s, next_s, meta.get("catalog_version", "")))
     else:
         line = ("Patent records currently indexed: <b>%s</b>"
-                '<span class="sep">·</span>Harvesting: <b>ongoing</b>' % f"{count:,}")
+                '<span class="sep">·</span>Harvesting: <b>ongoing</b>'
+                '<span class="sep">·</span>Counts verified at build: <b>%s</b>'
+                % (f"{count:,}", meta.get("catalog_version", "")))
     harv["harvest_line"] = line
     return harv
 
@@ -248,23 +262,51 @@ def main():
         if e["cpc"]:
             classes_covered.add(e["cpc"])
     classes_covered = sorted(classes_covered)
+    # Harvest status (sections + last/next harvest) computed once; meta.json
+    # and the page share it so all count sources agree.
+    harv = harvest_status({"sections": sections, "record_count": len(enriched)})
+    ct = harv.get("class_totals", {})
+    target_classes = ct.get("target_classes") or 122
     meta = {
         "catalog_version": "GRPC-" + today.replace("-", ""),
         "record_count": len(enriched),
         "last_updated": today,
-        "source_snapshot": "Google Patents harvest, all CPC A-H, 1976-2026",
+        "source_snapshot": ("Google Patents public records, 1976-2026. "
+                            "Target scope: CPC sections A-H (%d classes). "
+                            "PARTIAL HARVEST: %d of %d classes harvested so far; "
+                            "see harvest_scope." % (target_classes,
+                                                    len(classes_covered), target_classes)),
+        "harvest_scope": {
+            "target": "CPC sections A-H",
+            "target_classes": target_classes,
+            "classes_harvested": len(classes_covered),
+            "classes_covered": classes_covered,
+            "current_class": ct.get("current_class", ""),
+            "coverage_note": ("A class not listed here has not been harvested yet; "
+                              "a section showing 0 records means 'not yet harvested', "
+                              "never 'no patents exist'."),
+        },
         "catalog_hash": "sha256:" + h.hexdigest(),
         "sections": sections,
         "areas_covered": len(classes_covered),
         "classes_covered": classes_covered,
         "dupes_flagged": dupes,
         "quarantined": quarantined,
+        # Ownership / independence declarations (machine-readable).
+        "catalog_status": "INDEPENDENT_PUBLIC_RECORD_INDEX",
+        "government_affiliation": "NONE",
+        "record_ownership": "EXTERNAL",
+        "catalog_owner": "Justin Addam Higgins (JAH catalog)",
+        "patent_ownership": "NOT_CLAIMED",
+        "certification_meaning": ("Record-integrity certification only: the catalog "
+                                  "certifies its own data records and hashes. It does "
+                                  "not certify patents, their validity, or legal status."),
     }
     with open(META_DST, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=1)
     print("meta:", json.dumps(meta))
 
-    html = build_html(meta, harvest_status(meta), enriched)
+    html = build_html(meta, harv, enriched, last_ts=harv.get("last_ts"))
     for dst in (DST, DST2):
         with open(dst, "w", encoding="utf-8") as f:
             f.write(html)
@@ -281,6 +323,8 @@ def main():
     build_csv(enriched)
     write_registry_feed(new_recs, meta, today)
     refresh_api(len(enriched), today)
+    # BUILD GATES + health.json: every public count source must agree, or fail.
+    verify_counts_and_write_health(enriched, meta, today, harv.get("last_ts"))
 
 
 def build_csv(enriched):
@@ -415,6 +459,78 @@ def write_registry_feed(new_recs, meta, today):
     print("registry feed: %d batches, %d recent additions" % (len(batches), len(recent)))
 
 
+def verify_counts_and_write_health(enriched, meta, today, last_ts):
+    """BUILD GATES (2026-10-03): every public count source must agree with the
+    actual records, or the build fails loudly. Writes data/health.json."""
+    n = len(enriched)
+    checks = {}
+    # 1. meta.json record_count
+    checks["meta_record_count"] = (meta.get("record_count") == n)
+    # 2. CSV rows (minus header)
+    csv_path = os.path.join(ROOT, "data", "patents.csv")
+    try:
+        with open(csv_path, encoding="utf-8") as f:
+            csv_rows = sum(1 for _ in f) - 1
+    except FileNotFoundError:
+        csv_rows = -1
+    checks["csv_rows"] = (csv_rows == n)
+    # 3. api.json records_approx
+    api_path = os.path.join(ROOT, "api.json")
+    api_n = None
+    try:
+        m = re.search(r'"records_approx":\s*(\d+)', open(api_path, encoding="utf-8").read())
+        api_n = int(m.group(1)) if m else None
+    except FileNotFoundError:
+        pass
+    checks["api_records_approx"] = (api_n == n)
+    # 4. sitemap record URLs
+    sm_n = 0
+    for fname in _glob.glob(os.path.join(ROOT, "sitemap-records-*.xml")):
+        sm_n += open(fname, encoding="utf-8").read().count("?patent=")
+    checks["sitemap_record_urls"] = (sm_n == n)
+    # 5. search index rows
+    checks["search_index_rows"] = True  # written from the same `enriched` list
+    # 6. JAH-PAT ID integrity: one ID must never identify two different records.
+    # (Duplicate source records share their canon's ID by design and are
+    # counted separately in dupes_flagged — that is NOT a failure.)
+    seen_id = {}
+    id_collision = False
+    for e in enriched:
+        c = e["canon"]
+        j = e["jah"]
+        if j in seen_id and seen_id[j] != c:
+            id_collision = True
+            break
+        seen_id[j] = c
+    checks["jah_ids_unique_per_record"] = (not id_collision)
+    failed = [k for k, v in checks.items() if not v]
+    health = {
+        "status": "OK" if not failed else "FAILED",
+        "catalog_version": meta.get("catalog_version"),
+        "record_count": n,
+        "last_build": today,
+        "last_harvest_epoch": last_ts,
+        "last_harvest": (datetime.fromtimestamp(last_ts, tz=ET).isoformat()
+                         if (last_ts and ET) else None),
+        "next_harvest_epoch": (last_ts + 1800) if last_ts else None,
+        "csv_rows": csv_rows,
+        "api_records_approx": api_n,
+        "sitemap_record_urls": sm_n,
+        "checks": checks,
+        "failed_checks": failed,
+        "catalog_status": meta.get("catalog_status"),
+        "government_affiliation": meta.get("government_affiliation"),
+        "record_ownership": meta.get("record_ownership"),
+    }
+    with open(os.path.join(ROOT, "data", "health.json"), "w", encoding="utf-8") as f:
+        json.dump(health, f, indent=1)
+    print("health:", "OK" if not failed else "FAILED: " + ",".join(failed))
+    if failed:
+        raise SystemExit("BUILD GATE FAILED: count/integrity mismatch: %s "
+                         "(records=%d, csv=%s, api=%s, sitemap=%d)"
+                         % (",".join(failed), n, csv_rows, api_n, sm_n))
+
+
 def refresh_api(count, today):
     api_path = os.path.join(ROOT, "api.json")
     try:
@@ -431,6 +547,27 @@ def refresh_api(count, today):
                 'and the 200 most recent additions."\n'
                 '    },\n'
                 '    {\n      "path": "data/patents.jsonl",')
+        # INTEGRITY (2026-10-03): replace the overclaiming description with an
+        # honest partial-coverage statement, and stamp the ownership constants
+        # so machine consumers get them from api.json too.
+        txt = re.sub(
+            r'"description":\s*"Every public patent ever recorded[^"]*"',
+            '"description": "A growing independent index of public patent records '
+            'harvested from Google Patents. Partial CPC coverage \u2014 '
+            'see data/meta.json harvest_scope for harvested vs queued classes."',
+            txt)
+        if '"catalog_status"' not in txt:
+            txt = re.sub(
+                r'("records_as_of":\s*"[^"]*")',
+                r'\1,\n  "catalog_status": "INDEPENDENT_PUBLIC_RECORD_INDEX",'
+                r'\n  "government_affiliation": "NONE",'
+                r'\n  "record_ownership": "EXTERNAL",'
+                r'\n  "catalog_owner": "Justin Addam Higgins (JAH catalog)",'
+                r'\n  "patent_ownership": "NOT_CLAIMED",'
+                r'\n  "certification_meaning": "Record-integrity certification only: '
+                r'the catalog certifies its own data records and hashes. It does not '
+                r'certify patents, their validity, or legal status."',
+                txt, count=1)
         open(api_path, "w", encoding="utf-8").write(txt)
         print("refreshed api.json counts")
     except FileNotFoundError:

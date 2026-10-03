@@ -94,7 +94,7 @@ def static_sections(enriched, meta):
     return cats, recent
 
 
-def build_html(meta, harv=None, enriched=None):
+def build_html(meta, harv=None, enriched=None, last_ts=None):
     count = meta["record_count"]
     today = meta["last_updated"]
     sections = meta["sections"]
@@ -103,6 +103,8 @@ def build_html(meta, harv=None, enriched=None):
     meta_json = json.dumps(meta, ensure_ascii=False)
     harv = harv or {}
     sec_status = harv.get("sections", {})
+    last_ts = last_ts if last_ts is not None else harv.get("last_ts")
+    last_ts_attr = (' data-last-ts="%d"' % int(last_ts)) if last_ts else ""
 
     sec_buttons = []
     for s in sorted(SECTION_NAMES):
@@ -155,7 +157,7 @@ def build_html(meta, harv=None, enriched=None):
 <meta name="description" content="Globally Rejustered Patent Catalog: a free, searchable public index of __COUNT__ published patent records (numbers, titles, owners, inventors, dates, CPC classes) harvested from Google Patents. Not affiliated with the USPTO or any government agency.">
 <link rel="canonical" id="canon" href="https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/">
 <script type="application/ld+json" id="catalog-ld">
-{"@context":"https://schema.org","@graph":[{"@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents across all CPC sections A–H.","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents-index.json","encodingFormat":"application/json","description":"Incremental registry feed of newly harvested patent batches"}]},"numberOfItems":"__COUNT__","dateModified":"__DATE__","isAccessibleForFree":true},{"@type":"Dataset","name":"Globally Rejustered Patent Catalog","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","creator":{"@type":"Person","name":"Justin Addam Higgins"}}]}
+{"@context":"https://schema.org","@graph":[{"@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency. Catalog status: INDEPENDENT_PUBLIC_RECORD_INDEX; government affiliation: none; record ownership: external (listed owners); patent ownership: not claimed; certification: record-integrity only, never patent validity or legal status.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents; target scope all CPC sections A–H (partial harvest — see harvest_scope in data/meta.json).","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents-index.json","encodingFormat":"application/json","description":"Incremental registry feed of newly harvested patent batches"}]},"numberOfItems":"__COUNT__","dateModified":"__DATE__","isAccessibleForFree":true},{"@type":"Dataset","name":"Globally Rejustered Patent Catalog","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","creator":{"@type":"Person","name":"Justin Addam Higgins"}}]}
 </script>
 <script src="js/jah-talk-fallback.js"></script>
 <style>
@@ -495,7 +497,7 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
   </div>
 </div>
 <div class="finder" id="finder">
-  <div class="finder-h">&#9670; FINDER AI &mdash; describe what you're looking for in plain words</div>
+  <div class="finder-h">&#9670; FINDER AI &mdash; catalog search assistant: describe what you're looking for in plain words</div>
   <div class="finder-row">
     <input id="finderq" type="search" aria-label="Describe what you're looking for" placeholder="Describe what you're looking for&hellip;" autocomplete="off">
     <button id="findergo" type="button">Find it</button>
@@ -529,7 +531,8 @@ it is an independent index of public patent records.</p>
     <a href="data/meta.json">Catalog metadata (JSON)</a> &middot;
     <a href="data/patents-index.json">Registry feed (JSON)</a> &middot;
     <a href="sitemap.xml">Sitemap</a> &middot;
-    <a href="sitemap-index.xml">Full sitemap index</a></p>
+    <a href="sitemap-index.xml">Full sitemap index</a> &middot;
+    <a href="data/health.json">Catalog health (JSON)</a></p>
     <div class="statgrid">
       <span class="stat"><b>__COUNT__</b> patent records</span>
       <span class="stat"><b>__AREAS_N__</b> technology areas</span>
@@ -542,6 +545,14 @@ it is an independent index of public patent records.</p>
   <h2>About the data &amp; methodology</h2>
   <div class="infocard">
     <dl>
+      <dt>What "Globally Rejustered" means</dt>
+      <dd>"Rejustered" is this catalog's own word for a record it has normalized, hashed and
+      indexed. It is <b>not</b> an official patent or legal designation and must never be read
+      as "registered patent", "granted patent" or government certification. Machine-readable:
+      <b>CATALOG_STATUS = INDEPENDENT_PUBLIC_RECORD_INDEX</b> &middot; <b>GOVERNMENT_AFFILIATION =
+      NONE</b> &middot; <b>RECORD_OWNERSHIP = EXTERNAL</b> (listed owners) &middot;
+      <b>PATENT_OWNERSHIP = NOT_CLAIMED</b>. Inclusion of a record never means JAH owns the
+      invention.</dd>
       <dt>What a "patent record" is</dt>
       <dd>A patent record here is the public publication record — number, title, abstract, owner,
       inventor, dates and classification — harvested from Google Patents. Nothing is invented:
@@ -575,7 +586,9 @@ it is an independent index of public patent records.</p>
 <footer>
   <div class="fname">Globally Rejustered Patent Catalog</div>
   <p>An independent index of publicly available patent records, cataloged for compatibility
-  and certification purposes. All patents remain the property of their respective owners.<br>
+  and record-integrity certification purposes &mdash; "certification" here means the catalog
+  certifies its own data records and hashes, never the patents themselves, their validity,
+  or any legal status. All patents remain the property of their respective owners.<br>
   Full patent texts open on Google Patents. This catalog is not affiliated with the USPTO
   or any government agency.<br>
   <span id="metaline"></span></p>
@@ -755,7 +768,7 @@ function recviewHTML(fr) {
     'it states what the <b>applicant claimed</b>. A patent document does not prove its claims are ' +
     'scientifically or commercially true. This catalog does not independently verify claims.</div>');
   if (fr.abstract) L.push('<div class="rvrow"><span class="rvk">Abstract:</span> ' + esc(fr.abstract) + "</div>");
-  L.push('<div class="rvrow"><span class="rvk">Source:</span> Google Patents harvest, all CPC A–H, 1976–2026</div>');
+  L.push('<div class="rvrow"><span class="rvk">Source:</span> Google Patents public records (harvest); target scope CPC A&ndash;H, 1976&ndash;2026 &mdash; partial harvest, see coverage note</div>');
   L.push('<div class="rvrow"><span class="rvk">Cross-references:</span> ' +
     '<a class="full" style="display:inline;margin-top:0" href="https://justinahiggins614-cmyk.github.io/jah-wiki/?page=PAT:' +
     encodeURIComponent(fr.pub) + '">JAH Wiki article</a>' +
@@ -1435,6 +1448,48 @@ function patentHelperAsk(btn,q){
   log.scrollTop=log.scrollHeight;
 }
 
+/* ---- harvest clock: recompute "next harvest" live, never trust the baked time ----
+   The "Next harvest" time is baked at build time and goes stale ~30 min after
+   the page is built. data-last-ts (epoch of last successful harvest) is stamped
+   on the .harvestline div; this keeps the displayed time honest: future cycle
+   -> countdown text; past cycle -> honest "cycle due" state, never a stale
+   future-looking timestamp. */
+(function harvestClock() {
+  var el = document.querySelector(".harvestline");
+  if (!el) return;
+  var ts = parseInt(el.getAttribute("data-last-ts") || "0", 10);
+  if (!ts) return;
+  var slot = el.querySelector(".js-next-harvest");
+  function fmtET(ms) {
+    try {
+      return new Date(ms).toLocaleString("en-US", { timeZone: "America/New_York",
+        month: "short", day: "numeric", year: "numeric",
+        hour: "numeric", minute: "2-digit", hour12: true }) + " ET";
+    } catch (e) { return new Date(ms).toUTCString(); }
+  }
+  function ago(ms) {
+    var s = Math.floor(ms / 1000);
+    if (s < 60) return s + "s ago";
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + " min ago";
+    var h = Math.floor(m / 60);
+    return h + "h " + (m % 60) + "m ago";
+  }
+  function tick() {
+    var now = Date.now(), last = ts * 1000, next = last + 30 * 60 * 1000;
+    if (!slot) return;
+    if (next > now) {
+      var mins = Math.round((next - now) / 60000);
+      slot.textContent = fmtET(next) + " (in ~" + mins + " min)";
+    } else {
+      slot.textContent = "cycle due — last completed " + ago(now - last) +
+        " (harvester runs every 30 min)";
+    }
+  }
+  tick();
+  if (window.setInterval) window.setInterval(tick, 60000);
+})();
+
 /* ---- boot: fetch the compact search index, never the whole catalog ---- */
 (function boot() {
   var bootEl = document.getElementById("bootmsg");
@@ -1514,6 +1569,8 @@ function googleTranslateElementInit() {
     return (html.replace("__COUNT__", f"{count:,}")
                 .replace("__AREAS_N__", f"{areas_covered:,}")
                 .replace("__DATE__", today)
+                .replace('<div class="harvestline">__HARVEST_LINE__</div>',
+                         '<div class="harvestline"%s>__HARVEST_LINE__</div>' % last_ts_attr)
                 .replace("__HARVEST_LINE__", hl)
                 .replace("__HARVEST_LINE_TXT__", esc_html(hl_txt))
                 .replace("__SECTIONS__", sec_html)

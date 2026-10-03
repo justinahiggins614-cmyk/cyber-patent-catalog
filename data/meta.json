@@ -2,7 +2,26 @@
  "catalog_version": "GRPC-20261003",
  "record_count": 49919,
  "last_updated": "2026-10-03",
- "source_snapshot": "Google Patents harvest, all CPC A-H, 1976-2026",
+ "source_snapshot": "Google Patents public records, 1976-2026. Target scope: CPC sections A-H (122 classes). PARTIAL HARVEST: 10 of 122 classes harvested so far; see harvest_scope.",
+ "harvest_scope": {
+  "target": "CPC sections A-H",
+  "target_classes": 122,
+  "classes_harvested": 10,
+  "classes_covered": [
+   "A01",
+   "A21",
+   "A22",
+   "A23",
+   "A24",
+   "A41",
+   "A42",
+   "A43",
+   "H04L63",
+   "H04L9"
+  ],
+  "current_class": "A43",
+  "coverage_note": "A class not listed here has not been harvested yet; a section showing 0 records means 'not yet harvested', never 'no patents exist'."
+ },
  "catalog_hash": "sha256:cf473c7f76d3ca515b47407e7dfa21e462976371e218a2906cf426fcd78372fe",
  "sections": {
   "A": 48445,
@@ -22,5 +41,11 @@
   "H04L9"
  ],
  "dupes_flagged": 1,
- "quarantined": 1
+ "quarantined": 1,
+ "catalog_status": "INDEPENDENT_PUBLIC_RECORD_INDEX",
+ "government_affiliation": "NONE",
+ "record_ownership": "EXTERNAL",
+ "catalog_owner": "Justin Addam Higgins (JAH catalog)",
+ "patent_ownership": "NOT_CLAIMED",
+ "certification_meaning": "Record-integrity certification only: the catalog certifies its own data records and hashes. It does not certify patents, their validity, or legal status."
 }
