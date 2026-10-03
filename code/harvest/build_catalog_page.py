@@ -43,7 +43,7 @@ NUM_RE = re.compile(r"^([A-Z]{2})(\d+)([A-Z]\d*)?$")
 
 def parse_number(pub):
     """Split a publication number into (country, number, kind) — canonical ID parts."""
-    n = (pub or "").upper().replace(" ", "")
+    n = re.sub(r"[\s,.\-/]", "", (pub or "").upper())
     m = NUM_RE.match(n)
     if m:
         return m.group(1), m.group(2), m.group(3) or ""
@@ -264,7 +264,8 @@ def main():
     classes_covered = sorted(classes_covered)
     # Harvest status (sections + last/next harvest) computed once; meta.json
     # and the page share it so all count sources agree.
-    harv = harvest_status({"sections": sections, "record_count": len(enriched)})
+    harv = harvest_status({"sections": sections, "record_count": len(enriched),
+                           "catalog_version": "GRPC-" + today.replace("-", "")})
     ct = harv.get("class_totals", {})
     target_classes = ct.get("target_classes") or 122
     meta = {

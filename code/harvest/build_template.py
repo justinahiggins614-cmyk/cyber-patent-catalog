@@ -124,6 +124,25 @@ def build_html(meta, harv=None, enriched=None, last_ts=None):
     # Plain-text variant for the data/downloads section (static, crawlable).
     hl_txt = (hl.replace('<span class="sep">·</span>', " · ")
                 .replace("<b>", "").replace("</b>", ""))
+
+    # UX-2026-10-03 (wave): honest harvest progress bar. Classes harvested /
+    # target classes + the class currently under the 30-min harvester.
+    ct = harv.get("class_totals", {}) or {}
+    prog_total = ct.get("target_classes") or meta.get("harvest_scope", {}).get("target_classes") or 122
+    prog_done = len(meta.get("classes_covered", []) or [])
+    cur_class = ct.get("current_class") or meta.get("harvest_scope", {}).get("current_class") or ""
+    class_pos = ct.get("class_position") or 0
+    pct = min(100, round(100.0 * prog_done / prog_total)) if prog_total else 0
+    prog_html = (
+        '<div class="harvprog" role="img" aria-label="Harvest progress: %d of %d CPC classes harvested%s">'
+        '<div class="harvprog-track"><div class="harvprog-fill" style="width:%d%%"></div></div>'
+        '<div class="harvprog-label">Harvest progress: <b>%d of %d CPC classes</b>%s'
+        ' &middot; sections at 0 are queued, not empty</div></div>'
+        % (prog_done, prog_total,
+           ("; currently harvesting " + cur_class) if cur_class else "",
+           pct, prog_done, prog_total,
+           ("; currently harvesting <b>%s</b> (class %d of %d)"
+            % (esc_html(cur_class), class_pos, prog_total)) if cur_class else ""))
     # Plain-text variant for the data/downloads section (static, crawlable).
     hl_txt = (hl.replace('<span class="sep">·</span>', " · ")
                 .replace("<b>", "").replace("</b>", ""))
@@ -221,6 +240,20 @@ def build_html(meta, harv=None, enriched=None, last_ts=None):
   .modebtn { padding: 7px 14px; border-radius: 999px; border: 1px solid #9fb0c6;
              background: #fff; color: #33507e; cursor: pointer; font-size: .85em; }
   .modebtn.active { background: #16337a; border-color: #16337a; color: #fff; }
+  /* UX-2026-10-03 (wave): persistent ? Guide button shares the search-mode pill look */
+  .guidebtn { padding: 7px 14px; border-radius: 999px; border: 1px dashed #9fb0c6;
+             background: #fff; color: #33507e; cursor: pointer; font-size: .85em;
+             font-weight: 700; min-height: 36px; }
+  .guidebtn:hover { border-color: #16337a; color: #16337a; }
+  /* UX-2026-10-03 (wave): harvest progress bar + honest overdue state */
+  .harvprog { max-width: 620px; margin: 10px auto 0; padding: 0 20px; text-align: left; }
+  .harvprog-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,.14);
+                    border: 1px solid rgba(255,255,255,.22); overflow: hidden; }
+  .harvprog-fill { height: 100%; border-radius: 999px;
+                   background: linear-gradient(90deg, #c9a227, #e8c766); }
+  .harvprog-label { margin-top: 6px; font-size: .78em; color: #d9b84a; line-height: 1.6; }
+  .harvprog-label b { color: #fff; }
+  .harvestline.overdue .js-next-harvest { color: #ffb3b3; font-weight: 800; }
   .groups { margin: 16px 0 4px; }
   .groups .gtitle { text-align: center; font-size: .85em; color: #5b6b7f; font-weight: 700;
                     letter-spacing: .08em; margin-bottom: 8px; }
@@ -434,6 +467,46 @@ html[data-theme="dark"] img,html[data-theme="dark"] video,html[data-theme="dark"
 #jah-theme-toggle{position:fixed;right:14px;bottom:14px;z-index:99999;width:40px;height:40px;border-radius:50%;border:1px solid #c9a227;background:#16337a;color:#e8c766;font-size:20px;line-height:1;cursor:pointer;opacity:.7;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 #jah-theme-toggle:hover{opacity:1}
 </style>
+<style>
+/* UX-2026-10-03 (wave): first-time user guide — spotlight tour + ? Guide panel.
+   Additive only; the site's theme, look and vibe are untouched. */
+.pat-tour-dim { position: fixed; z-index: 90000; border: 2px solid #e8c766; border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(8,16,34,.55); pointer-events: none; display: none;
+  transition: all .25s ease; }
+.pat-tour-card { position: fixed; z-index: 90001; left: 50%; transform: translateX(-50%);
+  bottom: 18px; width: min(430px, calc(100vw - 32px)); background: #fff; color: #1f2a37;
+  border: 1px solid #c9d4e5; border-left: 5px solid #c9a227; border-radius: 12px;
+  box-shadow: 0 10px 34px rgba(0,0,0,.35); padding: 16px 18px 14px; display: none;
+  max-height: calc(100vh - 120px); overflow-y: auto; }
+.pat-tour-card.show, .pat-tour-dim.show { display: block; }
+.pat-tour-kicker { font-size: .7em; letter-spacing: .22em; color: #16337a; font-weight: 800; margin-bottom: 6px; }
+.pat-tour-title { font-size: 1.05em; font-weight: 800; color: #14213a; margin: 0 0 8px; }
+.pat-tour-body { font-size: .88em; line-height: 1.65; color: #33415c; }
+.pat-tour-body p { margin: 0 0 8px; }
+.pat-tour-body .tlab { font-weight: 800; color: #16337a; font-size: .78em; letter-spacing: .06em; }
+.pat-tour-nav { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+.pat-tour-nav button { min-height: 44px; padding: 10px 16px; border-radius: 8px; font-size: .92em;
+  font-weight: 700; cursor: pointer; border: 1px solid #16337a; }
+.pat-tour-next { background: #16337a; color: #fff; flex: 1; }
+.pat-tour-back { background: #fff; color: #16337a; }
+.pat-tour-skip { background: none; border: none; color: #5b6b7f; cursor: pointer;
+  font-size: .85em; padding: 10px 6px; min-height: 44px; text-decoration: underline; }
+.pat-tour-progress { font-size: .78em; color: #8a97a8; margin-left: auto; }
+.pat-guide-veil { position: fixed; inset: 0; z-index: 90002; background: rgba(8,16,34,.6);
+  display: none; align-items: flex-start; justify-content: center; padding: 5vh 16px; }
+.pat-guide-veil.show { display: flex; }
+.pat-guide { background: #fff; color: #1f2a37; border-radius: 12px; border-top: 5px solid #c9a227;
+  max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 20px 22px; }
+.pat-guide h2 { color: #14213a; font-family: Georgia, serif; margin: 0 0 4px; font-size: 1.3em; }
+.pat-guide .gsub { color: #5b6b7f; font-size: .88em; margin: 0 0 12px; }
+.pat-guide details { border: 1px solid #d3dce6; border-radius: 8px; margin: 8px 0; padding: 0; }
+.pat-guide summary { padding: 12px 14px; font-weight: 700; color: #16337a; cursor: pointer;
+  font-size: .92em; min-height: 44px; }
+.pat-guide details > div { padding: 0 14px 12px; font-size: .88em; line-height: 1.65; color: #33415c; }
+.pat-guide-close { display: block; margin: 14px auto 0; min-height: 44px; padding: 10px 26px;
+  border-radius: 8px; border: none; background: #16337a; color: #fff; font-weight: 700;
+  font-size: .95em; cursor: pointer; }
+</style>
 </head>
 <body>
 <button id="jah-theme-toggle" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">&#9681;</button>
@@ -489,6 +562,7 @@ paint();})();
   </details>
   <div class="langrow">&#127760; Language: <span id="google_translate_element"></span></div>
   <div class="harvestline">__HARVEST_LINE__</div>
+  __PROGRESS__
 </header>
 <div class="searchbar" id="searchbar">
   <div class="searchrow">
@@ -501,6 +575,9 @@ paint();})();
     <button type="button" class="modebtn" data-m="id">ID / number</button>
     <button type="button" class="modebtn" data-m="title">Title</button>
     <button type="button" class="modebtn" data-m="desc">Description</button>
+    <button type="button" class="modebtn" data-m="inventor">Inventor</button>
+    <button type="button" class="modebtn" data-m="owner">Owner</button>
+    <button type="button" class="guidebtn" id="guidebtn" aria-haspopup="dialog">? Guide</button>
   </div>
 </div>
 <div class="searchwrap">
@@ -652,6 +729,16 @@ function matchRow(r, qn, q) {
   if (mode === "desc" || mode === "all") {
     if (q && r[2].toLowerCase().indexOf(q) >= 0) return true;
     if (mode === "desc") return false;
+  }
+  /* UX-2026-10-03 (wave): dedicated Inventor and Owner search modes.
+     r[3] = inventor, r[4] = owner/assignee in the search-index row layout. */
+  if (mode === "inventor" || mode === "all") {
+    if (q && (r[3] || "").toLowerCase().indexOf(q) >= 0) return true;
+    if (mode === "inventor") return false;
+  }
+  if (mode === "owner" || mode === "all") {
+    if (q && (r[4] || "").toLowerCase().indexOf(q) >= 0) return true;
+    if (mode === "owner") return false;
   }
   if (mode === "all") {
     if (q && hayAll(r).indexOf(q) >= 0) return true;
@@ -876,7 +963,10 @@ function render() {
   var box = document.getElementById("results");
   if (!DATA) return;
   if (!filtered.length && (state.q || state.section || state.cpc)) {
-    box.innerHTML = noresHTML();
+    /* UX-2026-10-03 (wave): a ?patent= deep link that matched nothing gets its
+       own explicit message — never a blank page, never a bare generic note. */
+    box.innerHTML = state.deepLinkMiss ? noresDeepLinkHTML(state.deepLinkMiss)
+                                       : noresHTML();
     document.getElementById("count").innerHTML = "0 results";
     document.getElementById("more").style.display = "none";
     wireNores();
@@ -915,7 +1005,26 @@ function noresHTML() {
     '<button type="button" data-alt="broaden">Broaden search (all fields)</button>' +
     '<button type="button" data-alt="title">Search titles only</button>' +
     '<button type="button" data-alt="id">Search by patent number</button>' +
+    '<button type="button" data-alt="inventor">Search by inventor</button>' +
+    '<button type="button" data-alt="owner">Search by owner</button>' +
     '<button type="button" data-alt="clear">Clear search &amp; browse all</button>' +
+    "</div></div>";
+}
+function noresDeepLinkHTML(pnum) {
+  /* UX-2026-10-03 (wave): an explicit, human-readable message for a ?patent=
+     deep link whose ID matches no record — a mistyped or unknown number must
+     never render as a blank page. */
+  var q = esc(String(pnum || "").trim() || "that ID");
+  return '<div class="nores"><h3>That patent ID wasn&rsquo;t found</h3>' +
+    '<p>&ldquo;' + q + '&rdquo; does not match any record in this catalog. ' +
+    'Check the number for typos (a publication number looks like ' +
+    '<b>US10000000B2</b> &mdash; country code, digits, then the kind code), ' +
+    'or try searching by title, inventor, or owner instead. ' +
+    'This catalog holds only real harvested public records &mdash; if a number ' +
+    'is not here, it is not a record we hold. Nothing is invented.</p>' +
+    '<div class="alts">' +
+    '<button type="button" data-alt="id">Search by patent number</button>' +
+    '<button type="button" data-alt="clear">Clear &amp; browse all records</button>' +
     "</div></div>";
 }
 function wireNores() {
@@ -924,15 +1033,19 @@ function wireNores() {
     var b = e.target.closest ? e.target.closest("button[data-alt]") : null;
     if (!b) return;
     var a = b.getAttribute("data-alt");
+    state.deepLinkMiss = null;
     if (a === "broaden") setMode("all");
     else if (a === "title") setMode("title");
     else if (a === "id") setMode("id");
+    else if (a === "inventor") setMode("inventor");
+    else if (a === "owner") setMode("owner");
     else { state.q = ""; document.getElementById("q").value = ""; setMode("all"); }
     apply();
   }, { once: true });
 }
 function setMode(m) {
   state.mode = m;
+  state.deepLinkMiss = null;
   var btns = document.querySelectorAll(".modebtn");
   for (var i = 0; i < btns.length; i++)
     btns[i].classList.toggle("active", btns[i].getAttribute("data-m") === m);
@@ -1243,7 +1356,7 @@ function initUI() {
   renderSections();
   renderClasses();
   var input = document.getElementById("q"), t;
-  function doSearch() { state.q = input.value; apply(); }
+  function doSearch() { state.q = input.value; state.deepLinkMiss = null; apply(); }
   document.getElementById("go").onclick = doSearch;
   input.addEventListener("input", function () {
     clearTimeout(t);
@@ -1414,6 +1527,11 @@ function finderRun(){
           pel.style.borderColor = "#2563eb";
           setTimeout(function () { pel.style.borderColor = ""; }, 1600);
         }
+      } else {
+        /* UX-2026-10-03 (wave): malformed/unknown patent ID — the renderer
+           shows an explicit human-readable message for this ID. */
+        state.deepLinkMiss = pnum;
+        render();
       }
     } else { apply(); }
   } catch (e) { apply(); }
@@ -1500,12 +1618,23 @@ function patentHelperAsk(btn,q){
   function tick() {
     var now = Date.now(), last = ts * 1000, next = last + 30 * 60 * 1000;
     if (!slot) return;
-    if (next > now) {
-      var mins = Math.round((next - now) / 60000);
-      slot.textContent = fmtET(next) + " (in ~" + mins + " min)";
+    var sinceMs = now - last;
+    /* UX-2026-10-03 (wave): failed-harvest honesty. More than 60 minutes
+       without a successful harvest is not a "next harvest" — it is OVERDUE,
+       stated plainly, with the timestamp of the last one that worked. */
+    if (sinceMs > 60 * 60 * 1000) {
+      el.classList.add("overdue");
+      slot.textContent = "HARVEST OVERDUE — last successful harvest " +
+        ago(sinceMs) + " (expected every 30 min)";
     } else {
-      slot.textContent = "cycle due — last completed " + ago(now - last) +
-        " (harvester runs every 30 min)";
+      el.classList.remove("overdue");
+      if (next > now) {
+        var mins = Math.round((next - now) / 60000);
+        slot.textContent = fmtET(next) + " (in ~" + mins + " min)";
+      } else {
+        slot.textContent = "cycle due — last completed " + ago(sinceMs) +
+          " (harvester runs every 30 min)";
+      }
     }
   }
   tick();
@@ -1652,6 +1781,261 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
 }catch(e){}
 })();
 </script>
+<script>
+/* ============ UX-2026-10-03 (wave): FIRST-TIME USER GUIDE ============
+   One-minute spotlight tour (auto-offers on first visit; localStorage
+   "jah-tour-seen-patents") + permanent "? Guide" panel documenting every
+   real feature in plain language. Additive only — theme and vibe untouched.
+   ES5-safe; keyboard accessible (Esc / arrows); touch-sized buttons; the
+   overlay never blocks content (pointer-events: none on the dimmer). */
+(function patGuide(){
+  var SEEN_KEY = "jah-tour-seen-patents";
+  function seen(){ try { return localStorage.getItem(SEEN_KEY) === "1"; } catch(e){ return true; } }
+  function markSeen(){ try { localStorage.setItem(SEEN_KEY, "1"); } catch(e){} }
+  function hasDeepLink(){ try { return !!new URLSearchParams(location.search).get("patent"); } catch(e){ return false; } }
+  var STEPS = [
+    { sel: "#q", title: "Search the whole catalog",
+      what: "This is the search box — one box for the entire catalog.",
+      does: "It searches every patent record live on your device: numbers, titles, keywords, companies, inventors, owners.",
+      how: "Type and tap Search — or just keep typing; results update as you type. Tap a result's title to open its record page." },
+    { sel: ".moderow", title: "Search by field",
+      what: "These buttons choose which field the search looks in.",
+      does: "All fields, ID / number, Title, Description, Inventor, or Owner — so an inventor's name or a company name finds its patents.",
+      how: "Tap one, then search. \u201cAll fields\u201d is the default." },
+    { sel: "#secbtns", title: "Browse by invention field",
+      what: "The A\u2013H buttons are the eight invention sections — agriculture, chemistry, electricity, and so on.",
+      does: "Tapping one filters the catalog to that field. A section at 0 says \u201cnot harvested yet\u201d plainly — the harvester reaches it in order.",
+      how: "Tap a section to filter; tap it again to clear. The class pills underneath narrow it down further." },
+    { sel: "#letters", title: "Jump by letter",
+      what: "This A\u2013Z strip jumps to titles starting with a letter.",
+      does: "Letters with no matching titles stay greyed out.",
+      how: "Tap a letter to jump to it; the arrow at the start scrolls back to the top." },
+    { sel: ".card", title: "Patent record cards",
+      what: "Every result is a public patent record — number, title, owner, inventor, dates, field.",
+      does: "The pill tells you its status: Live (granted), Pending (application), Rejustered (catalog-normalized), or Needs review. Source: Google Patents, always.",
+      how: "Tap the title for the record page, or \u201cView full patent text\u201d to read the record right here. \u201cOriginal record \u2192\u201d opens the source document." },
+    { sel: ".jahrecord", title: "Record tools: share, copy, download, read aloud",
+      what: "Every card has its own tool panel: OPEN, SHARE, COPY, DOWNLOAD, READ ALOUD — plus a personal AI you can ask about the record.",
+      does: "SHARE copies a link to that exact record; COPY and DOWNLOAD save its text; READ ALOUD speaks it aloud; the AI answers only from that record and never invents facts.",
+      how: "Tap READ ALOUD to hear a record; tap again to stop. \u201cAsk the AI\u201d opens a chat grounded in that record alone." },
+    { sel: ".harvprog", title: "Harvest progress",
+      what: "This is the live harvest report: how many of the 122 CPC classes are harvested, the last harvest time, and the next 30-minute cycle.",
+      does: "The harvester adds new records every 30 minutes. Nothing here is ever deleted to make room.",
+      how: "If a harvest ever falls behind, this says OVERDUE honestly instead of showing a stale \u201cnext\u201d time." },
+    { sel: "#data", title: "Data & downloads",
+      what: "Everything on this page is machine-readable as well as human-readable.",
+      does: "Full CSV export, catalog metadata, the registry feed of new batches, sitemaps, and the catalog health check — all real files.",
+      how: "Tap any link to download or inspect it. Bots and AI assistants can use these directly, no JavaScript needed." }
+  ];
+  var dim = null, card = null, veil = null, idx = 0, lastFocus = null;
+
+  function ensure(){
+    if (dim) return;
+    dim = document.createElement("div");
+    dim.className = "pat-tour-dim"; dim.setAttribute("aria-hidden", "true");
+    document.body.appendChild(dim);
+    card = document.createElement("div");
+    card.className = "pat-tour-card";
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "false");
+    card.setAttribute("tabindex", "-1");
+    card.innerHTML =
+      '<div class="pat-tour-kicker" id="ptk">CATALOG TOUR</div>' +
+      '<h3 class="pat-tour-title" id="ptt"></h3>' +
+      '<div class="pat-tour-body" id="ptb"></div>' +
+      '<div class="pat-tour-nav">' +
+      '<button type="button" class="pat-tour-back" id="ptback">Back</button>' +
+      '<button type="button" class="pat-tour-next" id="ptnext">Next</button>' +
+      '<button type="button" class="pat-tour-skip" id="ptskip">Skip tour</button>' +
+      '<span class="pat-tour-progress" id="ptprog"></span></div>';
+    document.body.appendChild(card);
+    document.getElementById("ptback").onclick = function(){ show(idx - 1); };
+    document.getElementById("ptnext").onclick = function(){
+      if (idx >= liveSteps().length - 1) end(true); else show(idx + 1);
+    };
+    document.getElementById("ptskip").onclick = function(){ end(true); };
+    card.addEventListener("keydown", function(e){
+      if (e.key === "Escape" || e.key === "Esc") { e.preventDefault(); end(true); }
+      else if (e.key === "ArrowRight") { e.preventDefault();
+        if (idx >= liveSteps().length - 1) end(true); else show(idx + 1); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); show(idx - 1); }
+    });
+  }
+  /* Steps whose target exists right now (cards only exist after results render). */
+  var stepCache = null;
+  function liveSteps(){
+    if (!stepCache) {
+      stepCache = STEPS.filter(function(s){
+        try { return !!document.querySelector(s.sel); } catch(e){ return false; }
+      });
+    }
+    return stepCache;
+  }
+  function place(step){
+    var el = null;
+    try { el = document.querySelector(step.sel); } catch(e){}
+    if (!el) return false;
+    try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch(e2){
+      try { el.scrollIntoView(true); } catch(e3){}
+    }
+    var r = el.getBoundingClientRect(), pad = 8;
+    dim.style.left = Math.max(4, r.left - pad) + "px";
+    dim.style.top = Math.max(4, r.top - pad) + "px";
+    dim.style.width = (r.width + pad * 2) + "px";
+    dim.style.height = (r.height + pad * 2) + "px";
+    return true;
+  }
+  function show(i){
+    var steps = liveSteps();
+    if (i < 0) i = 0;
+    if (i >= steps.length) { end(true); return; }
+    idx = i;
+    var s = steps[i], ok = place(s);
+    if (!ok) { end(false); return; }
+    document.getElementById("ptk").textContent = "CATALOG TOUR";
+    document.getElementById("ptt").textContent = s.title;
+    document.getElementById("ptb").innerHTML =
+      '<p><span class="tlab">WHAT IT IS:</span> ' + escHtml(s.what) + "</p>" +
+      '<p><span class="tlab">WHAT IT DOES:</span> ' + escHtml(s.does) + "</p>" +
+      '<p><span class="tlab">HOW TO USE IT:</span> ' + escHtml(s.how) + "</p>";
+    document.getElementById("ptback").style.visibility = i === 0 ? "hidden" : "visible";
+    document.getElementById("ptnext").textContent = (i === steps.length - 1) ? "Finish" : "Next";
+    document.getElementById("ptskip").textContent = "Skip tour";
+    document.getElementById("ptprog").textContent = "Step " + (i + 1) + " of " + steps.length;
+    dim.classList.add("show"); card.classList.add("show");
+    try { card.focus({ preventScroll: true }); } catch(e){ try { card.focus(); } catch(e2){} }
+  }
+  function intro(){
+    ensure();
+    idx = -1;
+    document.getElementById("ptk").textContent = "WELCOME";
+    document.getElementById("ptt").textContent = "New to the catalog? Take the 1-minute tour";
+    document.getElementById("ptb").innerHTML =
+      "<p>Eight quick stops: <b>search</b>, <b>search-by-field</b>, <b>browse by invention field</b>, " +
+      "the <b>A\u2013Z jump bar</b>, <b>record cards</b>, <b>share / copy / download / read aloud</b>, " +
+      "<b>harvest progress</b>, and <b>data downloads</b>.</p>" +
+      "<p>It takes about a minute. You can replay it any time from the <b>? Guide</b> button by the search box.</p>";
+    document.getElementById("ptback").style.visibility = "hidden";
+    document.getElementById("ptnext").textContent = "Start tour";
+    document.getElementById("ptskip").textContent = "Skip";
+    document.getElementById("ptprog").textContent = "";
+    document.getElementById("ptnext").onclick = function(){ show(0); rewireNext(); };
+    card.classList.add("show");
+    try { card.focus({ preventScroll: true }); } catch(e){ try { card.focus(); } catch(e2){} }
+  }
+  function rewireNext(){
+    document.getElementById("ptnext").onclick = function(){
+      if (idx >= liveSteps().length - 1) end(true); else show(idx + 1);
+    };
+  }
+  function end(mark){
+    if (dim) dim.classList.remove("show");
+    if (card) card.classList.remove("show");
+    if (mark) markSeen();
+    stepCache = null;
+  }
+  function escHtml(s){
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  /* ---- permanent ? Guide panel ---- */
+  function guideHTML(){
+    function det(t, body){
+      return '<details><summary>' + t + '</summary><div>' + body + '</div></details>';
+    }
+    var h = '<h2>How to use this catalog</h2>' +
+      '<p class="gsub">Plain-language guide to every feature. Nothing here changes the page — it only explains it.</p>';
+    h += det("Searching",
+      "<p><b>The search box</b> searches every record on your device — numbers, titles, keywords, companies, inventors, owners. " +
+      "Results update as you type; press Enter or tap Search for a fresh pass.</p>" +
+      "<p><b>Search by</b> buttons narrow the field: <b>All fields</b> (default), <b>ID / number</b> (exact-ish patent number, " +
+      "dashes and spaces ignored), <b>Title</b>, <b>Description</b> (abstract), <b>Inventor</b>, <b>Owner</b>.</p>" +
+      "<p><b>Sort</b> switches A\u2013Z, newest first, oldest first. <b>Show more</b> loads the next 60 results.</p>");
+    h += det("Browsing by invention field (sections A\u2013H)",
+      "<p>The eight section buttons filter to one field of invention — A: Human necessities, B: Performing operations, " +
+      "C: Chemistry, D: Textiles, E: Fixed constructions, F: Mechanical engineering, G: Physics, H: Electricity.</p>" +
+      "<p>A section showing <b>0</b> is labeled <b>\u201cnot harvested yet\u201d</b> — the harvester works through the 122 CPC classes " +
+      "in order and fills sections in automatically. Zero never means \u201cno patents exist\u201d.</p>" +
+      "<p>After picking a section, the <b>class pills</b> (e.g. A01 Agriculture) narrow to one technology area. " +
+      "The <b>A\u2013Z strip</b> jumps to titles by first letter; greyed letters have no titles.</p>");
+    h += det("Patent record cards",
+      "<p>Each card shows the <b>publication number</b> (the canonical record ID) and the catalog's permanent <b>JAH-PAT</b> ID, " +
+      "title, owner, inventor, dates, field, and a status pill: <b>Live</b> (granted), <b>Pending</b> (published application), " +
+      "<b>Rejustered</b> (normalized by the catalog; the source named no type), or <b>Needs review</b> (flagged).</p>" +
+      "<p><b>View full patent text</b> opens the complete harvested record on the card. " +
+      "<b>Original record \u2192</b> opens the source document on Google Patents — the catalog's source database for every record.</p>" +
+      "<p>Every record also carries its <b>source</b> (Google Patents harvest), a per-record <b>SHA-256 hash</b> for verification, " +
+      "and a note that a patent record states what the applicant <b>claimed</b> — it does not prove the claims true.</p>");
+    h += det("Record tools: share, copy, download, read aloud, AI",
+      "<p>Each card's tool panel: <b>OPEN</b> (the record's own page), <b>SHARE</b> (copies a link like ?patent=US10000000B2), " +
+      "<b>COPY</b> and <b>DOWNLOAD</b> (the record as text), <b>READ ALOUD</b> (speaks the record; tap again to stop).</p>" +
+      "<p><b>Ask the AI</b> opens a personal assistant for that record — it answers only from that record and says plainly " +
+      "when the record doesn't cover a question. The <b>Record Helper</b> quotes the open record's own fields.</p>");
+    h += det("Harvest progress & honesty",
+      "<p>The gold line under the title is the live harvest report: records indexed, the <b>last successful harvest</b> time, " +
+      "and the next 30-minute cycle. The bar shows how many of the <b>122 CPC classes</b> are harvested so far.</p>" +
+      "<p>If a harvest falls more than an hour behind, the line says <b>HARVEST OVERDUE</b> honestly instead of showing a stale " +
+      "\u201cnext harvest\u201d time. Records are never deleted to make room — growth is sideways only.</p>");
+    h += det("Data & downloads",
+      "<p>The bottom section links the raw goods: the <b>full CSV</b> (every record, one row each), <b>catalog metadata</b>, " +
+      "the <b>registry feed</b> (new batches + 200 most recent additions), <b>sitemaps</b>, and <b>catalog health</b> " +
+      "(the build gates that force every public count to agree).</p>" +
+      "<p>Deep links work everywhere: <b>?patent=US10000000B2</b> opens that record directly. A bad or unknown ID gets an " +
+      "explicit \u201cnot found\u201d message — never a blank page.</p>");
+    h += '<button type="button" class="pat-guide-close" id="pgreplay" style="background:#fff;color:#16337a;border:1px solid #16337a;margin-bottom:4px">Replay the 1-minute tour</button>';
+    h += '<button type="button" class="pat-guide-close" id="pgclose">Close guide</button>';
+    return h;
+  }
+  function ensureVeil(){
+    if (veil) return;
+    veil = document.createElement("div");
+    veil.className = "pat-guide-veil";
+    veil.innerHTML = '<div class="pat-guide" role="dialog" aria-modal="true" aria-label="How to use this catalog" id="pgbox">' +
+      guideHTML() + '</div>';
+    document.body.appendChild(veil);
+    document.getElementById("pgclose").onclick = closeGuide;
+    document.getElementById("pgreplay").onclick = function(){ closeGuide(); stepCache = null; show(0); };
+    veil.addEventListener("click", function(e){ if (e.target === veil) closeGuide(); });
+    veil.addEventListener("keydown", function(e){
+      if (e.key === "Escape" || e.key === "Esc") { e.preventDefault(); closeGuide(); }
+    });
+  }
+  function openGuide(){
+    ensureVeil();
+    lastFocus = document.activeElement;
+    veil.classList.add("show");
+    var c = document.getElementById("pgclose");
+    try { c.focus({ preventScroll: true }); } catch(e){ try { c.focus(); } catch(e2){} }
+  }
+  function closeGuide(){
+    if (veil) veil.classList.remove("show");
+    if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch(e){} }
+    lastFocus = null;
+  }
+
+  /* ---- wire up ---- */
+  function wire(){
+    var gb = document.getElementById("guidebtn");
+    if (gb && !gb.getAttribute("data-wired")) {
+      gb.setAttribute("data-wired", "1");
+      gb.addEventListener("click", openGuide);
+    }
+  }
+  wire();
+  /* auto-offer the tour on first visit, once the catalog index has loaded */
+  var tries = 0;
+  var iv = setInterval(function(){
+    tries++;
+    if ((window.DATA && DATA.length) || tries > 80) {
+      clearInterval(iv);
+      wire();
+      if (!seen() && !hasDeepLink() && window.DATA && DATA.length) {
+        setTimeout(function(){ ensure(); intro(); }, 1500);
+      }
+    }
+  }, 250);
+})();
+</script>
 <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
@@ -1662,6 +2046,7 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
                 .replace('<div class="harvestline">__HARVEST_LINE__</div>',
                          '<div class="harvestline"%s>__HARVEST_LINE__</div>' % last_ts_attr)
                 .replace("__HARVEST_LINE__", hl)
+                .replace("__PROGRESS__", prog_html)
                 .replace("__HARVEST_LINE_TXT__", esc_html(hl_txt))
                 .replace("__SECTIONS__", sec_html)
                 .replace("__COVERAGE_NOTE__", coverage_note)
