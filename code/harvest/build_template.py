@@ -980,6 +980,10 @@ __ARCHIVE__
 <a href="https://justinahiggins614-cmyk.github.io/signature-university/" target="_blank" rel="noopener">25 The Signature University</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-cyber-mega-mall/" target="_blank" rel="noopener">26 The Signature Cyber Mega-Mall</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-3d-print/" target="_blank" rel="noopener">27 The Signature 3D Print Mega Mall</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-earth/" target="_blank" rel="noopener">28 Signature Earth</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-flight-school/" target="_blank" rel="noopener">29 The Signature Flight School</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-game-store/" target="_blank" rel="noopener">30 The Signature Game Store</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-website-creator/" target="_blank" rel="noopener">31 The Signature Website Creator</a>
 </div></nav>
 <!-- JAH STANDARD SIGNATURE STAMP -->
 <div style="text-align:center;padding:14px 12px 4px"><img src="assets/signature-stamp.jpg" alt="The official Signature stamp" style="width:120px;max-width:32%;height:auto"></div>
