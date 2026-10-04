@@ -788,32 +788,33 @@ __ARCHIVE__
   </div>
 </section>
 <nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 8 OF 27</span>
-<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Phone Book</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Calculator</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">Dictionary</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">JAH-N Wiki</a>
-<span class="jahnet-cur">Globally Rejustered Patent Catalog</span>
-<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/specs.html">Spec Catalog</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-llama/">Signature Llama</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-computer-systems/">PC Depository</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-cyber-mega-mall/">Cyber Mega-Mall</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-university/">Signature University</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-books/">Book Depository</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-comics/">Comic Store</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-newspapers/">Global Newspaper Archive</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-3d-print/">3D Print Mega Mall</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-backend/">Mad Scientist Lab</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-boundless-generators/">Boundless Generator Archive</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-mixlab/">AI Mix Lab</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-olypics/">AI Olypics</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-chip-maker/">Chip Maker and Archive</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-app-archive/">App Archive</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-robot-matcher/">AI Robot Matcher</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-experiment-solver/">Experiment Solver</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-image-video-maker/">Signature AI Pixel</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-song-maker/">Signature Music Studio</a>
-
+<a href="https://justinahiggins614-cmyk.github.io/signature-math/" target="_blank" rel="noopener">1 Signature Math</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/" target="_blank" rel="noopener">2 Signature Universal Paradox Immune Calculator</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/" target="_blank" rel="noopener">3 The Signature Dictionary</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-wiki/" target="_blank" rel="noopener">4 JAH Wiki</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/" target="_blank" rel="noopener">5 JAH-N Wiki</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-llama/" target="_blank" rel="noopener">6 Signature Llama: The Fully Cyber Utilizable AI</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/" target="_blank" rel="noopener">7 The Signature AI Phone Book</a>
+<span class="jahnet-cur">8 Globally Rejustered Patent Catalog — YOU ARE HERE</span>
+<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/specs.html" target="_blank" rel="noopener">9 Signature Spec Catalog Pending Patents</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-computer-systems/" target="_blank" rel="noopener">10 The Signature PC System Depository</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-books/" target="_blank" rel="noopener">11 The Signature Book Depository</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-comics/" target="_blank" rel="noopener">12 The Signature Comic Store</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-newspapers/" target="_blank" rel="noopener">13 The Signature Global Newspaper Archive</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-backend/" target="_blank" rel="noopener">14 The Signature AI Mad Scientist Creation Lab</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-boundless-generators/" target="_blank" rel="noopener">15 The Signature Boundless Generator Archive</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-mixlab/" target="_blank" rel="noopener">16 The Signature AI Mix Lab</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-olypics/" target="_blank" rel="noopener">17 AI Olypics</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-chip-maker/" target="_blank" rel="noopener">18 The Signature Computer Chip Maker and Archive</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-app-archive/" target="_blank" rel="noopener">19 The Signature App Archive</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-robot-matcher/" target="_blank" rel="noopener">20 The Signature AI Robot Matcher</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-experiment-solver/" target="_blank" rel="noopener">21 The Signature Experiment Solver</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-image-video-maker/" target="_blank" rel="noopener">22 Signature AI Pixel</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-song-maker/" target="_blank" rel="noopener">23 Signature Music Studio</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-fixit/" target="_blank" rel="noopener">24 The Signature Mr Fix-It</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-university/" target="_blank" rel="noopener">25 The Signature University</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-cyber-mega-mall/" target="_blank" rel="noopener">26 The Signature Cyber Mega-Mall</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-3d-print/" target="_blank" rel="noopener">27 The Signature 3D Print Mega Mall</a>
 </div></nav>
 <!-- JAH STANDARD SIGNATURE STAMP -->
 <div style="text-align:center;padding:14px 12px 4px"><img src="assets/signature-stamp.jpg" alt="The official Signature stamp" style="width:120px;max-width:32%;height:auto"></div>
