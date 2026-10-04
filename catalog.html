@@ -588,6 +588,35 @@ it is an independent index of public patent records.</p>
   <span id="metaline"></span></p>
 </footer>
 <script>
+/* ==== JAH global read-aloud controller (one per page): no stacked voices, no orphan audio ==== */
+(function(){
+if(window.__JAHREAD)return;
+var R={audios:[],lastTap:0,lastLabel:""};
+R.stopAll=function(){
+ try{if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
+ try{if(window.responsiveVoice&&window.responsiveVoice.cancel)window.responsiveVoice.cancel();}catch(e){}
+ var i,a;
+ for(i=0;i<R.audios.length;i++){a=R.audios[i];try{a.pause();}catch(e){}try{a.removeAttribute("src");}catch(e){}try{a.load();}catch(e){}}
+ R.audios.length=0;
+ var els=document.querySelectorAll("audio");
+ for(i=0;i<els.length;i++){try{els[i].pause();}catch(e){}}
+};
+R.reg=function(a){if(a&&R.audios.indexOf(a)<0)R.audios.push(a);return a;};
+R.playGuard=function(label){
+ var now=Date.now();
+ if(now-R.lastTap<450&&label===R.lastLabel){R.lastTap=0;R.lastLabel="";R.stopAll();return false;}
+ R.lastTap=now;R.lastLabel=String(label||"");
+ R.stopAll();return true;
+};
+try{
+ var NativeAudio=window.Audio;
+ window.Audio=function(src){var a=src===undefined?new NativeAudio():new NativeAudio(src);R.reg(a);return a;};
+ window.Audio.prototype=NativeAudio.prototype;
+}catch(e){}
+window.__JAHREAD=R;
+})();
+</script>
+<script>
 var CLASS_NAMES = {"A01": "Agriculture & forestry", "A21": "Baking", "A22": "Butchery & meat", "A23": "Foods & foodstuffs", "A24": "Tobacco", "A41": "Clothing", "A42": "Headwear", "A43": "Footwear", "A44": "Jewellery & haberdashery", "A45": "Luggage & hand articles", "A46": "Brushware", "A47": "Furniture", "A61": "Medical & veterinary", "A62": "Life-saving & fire-fighting", "A63": "Sports & games", "B01": "Chemical processes", "B02": "Crushing & milling", "B03": "Separating solids", "B04": "Centrifuges", "B05": "Spraying & coating", "B06": "Mechanical vibrations", "B07": "Sorting", "B08": "Cleaning", "B21": "Metal-working (no cutting)", "B22": "Casting & powder metallurgy", "B23": "Machine tools", "B24": "Grinding & polishing", "B25": "Hand tools", "B26": "Cutting tools", "B27": "Woodworking", "B28": "Working stone & clay", "B29": "Plastics", "B30": "Presses", "B31": "Paper & packaging", "B32": "Layered products", "B33": "3D printing", "B41": "Printing", "B42": "Bookbinding", "B43": "Writing implements", "B44": "Decorative arts", "B60": "Vehicles", "B61": "Railways", "B62": "Cycles & motorcycles", "B63": "Ships", "B64": "Aircraft", "B65": "Conveying & packaging", "B66": "Lifting & hoisting", "B67": "Bottles & containers", "B68": "Upholstery", "B81": "Microtechnology", "B82": "Nanotechnology", "C01": "Inorganic chemistry", "C02": "Water treatment", "C03": "Glass & ceramics", "C04": "Cements & concrete", "C05": "Fertilisers", "C06": "Explosives", "C07": "Organic chemistry", "C08": "Polymers", "C09": "Dyes, paints & adhesives", "C10": "Petroleum & fuels", "C11": "Oils, fats & detergents", "C12": "Biochemistry", "C13": "Sugar", "C14": "Leather", "C21": "Iron metallurgy", "C22": "Metallurgy & alloys", "C23": "Metal coating", "C25": "Electrolytic processes", "C30": "Crystal growth", "D01": "Fibres & spinning", "D02": "Yarns", "D03": "Weaving", "D04": "Knitting & lace", "D05": "Sewing & embroidery", "D06": "Textile treatment", "D07": "Ropes & cables", "D21": "Paper-making", "E01": "Roads & bridges", "E02": "Hydraulic engineering", "E03": "Water & sewerage", "E04": "Building", "E05": "Locks & safes", "E06": "Doors & windows", "E21": "Drilling & mining", "F01": "Engines (general)", "F02": "Combustion engines", "F03": "Wind & water motors", "F04": "Pumps & compressors", "F15": "Fluid-pressure devices", "F16": "Machine elements", "F17": "Gas & liquid storage", "F21": "Lighting", "F22": "Steam generation", "F23": "Combustion apparatus", "F24": "Heating & cooling", "F25": "Refrigeration", "F26": "Drying", "F27": "Furnaces & ovens", "F28": "Heat exchange", "F41": "Weapons", "F42": "Ammunition & blasting", "G01": "Measuring & testing", "G02": "Optics", "G03": "Photography", "G04": "Clocks & watches", "G05": "Controlling & regulating", "G06": "Computing", "G07": "Checking devices", "G08": "Signalling", "G09": "Displays & education", "G10": "Music & acoustics", "G11": "Information storage", "G12": "Instrument details", "G16": "Applied ICT", "G21": "Nuclear engineering", "H01": "Electric devices", "H02": "Electric power", "H03": "Electronic circuitry", "H04": "Electric communication", "H05": "Electric techniques", "H10": "Semiconductors", "H04L63": "Network security", "H04L9": "Cryptography", "G06F21": "System security", "H04W12": "Wireless security", "H04K": "Secret communication"};
 var SECTION_NAMES = {"A": "Human necessities", "B": "Performing operations; transporting", "C": "Chemistry; metallurgy", "D": "Textiles; paper", "E": "Fixed constructions", "F": "Mechanical engineering", "G": "Physics", "H": "Electricity"};
 var META_BAKED = {"catalog_version": "GRPC-20261004", "record_count": 66530, "last_updated": "2026-10-04", "source_snapshot": "Google Patents public records, 1976-2026. Target scope: CPC sections A-H (122 classes). PARTIAL HARVEST: 13 of 122 classes harvested so far; see harvest_scope.", "harvest_scope": {"target": "CPC sections A-H", "target_classes": 122, "classes_harvested": 13, "classes_covered": ["A01", "A21", "A22", "A23", "A24", "A41", "A42", "A43", "A44", "A45", "A46", "H04L63", "H04L9"], "current_class": "A46", "coverage_note": "A class not listed here has not been harvested yet; a section showing 0 records means 'not yet harvested', never 'no patents exist'."}, "catalog_hash": "sha256:33502cc4fc5b95abb719dffe61003999470c44ef170abbaab9e4ffd993a2046d", "sections": {"A": 65056, "H": 1474}, "areas_covered": 13, "classes_covered": ["A01", "A21", "A22", "A23", "A24", "A41", "A42", "A43", "A44", "A45", "A46", "H04L63", "H04L9"], "dupes_flagged": 3, "quarantined": 3, "catalog_status": "INDEPENDENT_PUBLIC_RECORD_INDEX", "government_affiliation": "NONE", "record_ownership": "EXTERNAL", "catalog_owner": "Justin Addam Higgins (JAH catalog)", "patent_ownership": "NOT_CLAIMED", "certification_meaning": "Record-integrity certification only: the catalog certifies its own data records and hashes. It does not certify patents, their validity, or legal status."};
@@ -991,6 +1020,7 @@ function fxPlay2(list, i, tier, retry, done){
   try { var pr=a.play(); if (pr&&pr.catch) pr.catch(function(){}); } catch(e){}
 }
 function stopAudio2(){
+  try{if(window.__JAHREAD)window.__JAHREAD.stopAll();}catch(e){}
   try { if (hasSpeech2()) window.speechSynthesis.cancel(); } catch(e){}
   FX2.active=false;
   if (FX2.audio){ try { FX2.audio.pause(); } catch(e){} FX2.audio=null; }
@@ -998,6 +1028,7 @@ function stopAudio2(){
     readingBtn.innerHTML = dl ? dl : "\uD83D\uDD0A Read aloud"; readingBtn=null; }
 }
 function readText2(text, btn, done){
+  if(window.__JAHREAD&&!window.__JAHREAD.playGuard("readText2"))return;
   stopAudio2();
   if (btn && !btn.getAttribute("data-label")) btn.setAttribute("data-label", btn.innerHTML);
   if (!text || !text.trim()){ if(done)done(); return; }
