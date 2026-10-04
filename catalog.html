@@ -19,6 +19,7 @@
 {"@context":"https://schema.org","@graph":[{"@type":"DataCatalog","name":"Globally Rejustered Patent Catalog","description":"A public, searchable catalog of harvested published patent records: publication number, title, owner, inventor, dates and CPC classification. Independent catalog, not affiliated with the USPTO or any government agency. Catalog status: INDEPENDENT_PUBLIC_RECORD_INDEX; government affiliation: none; record ownership: external (listed owners); patent ownership: not claimed; certification: record-integrity only, never patent validity or legal status.","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","dataset":{"@type":"Dataset","name":"Harvested public patent records","description":"Published patent records harvested from Google Patents; target scope all CPC sections A–H (partial harvest — see harvest_scope in data/meta.json).","distribution":[{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents.csv","encodingFormat":"text/csv"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/meta.json","encodingFormat":"application/json"},{"@type":"DataDownload","contentUrl":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/data/patents-index.json","encodingFormat":"application/json","description":"Incremental registry feed of newly harvested patent batches"}]},"numberOfItems":"67,289","dateModified":"2026-10-04","isAccessibleForFree":true},{"@type":"Dataset","name":"Globally Rejustered Patent Catalog","url":"https://justinahiggins614-cmyk.github.io/cyber-patent-catalog/","creator":{"@type":"Person","name":"Justin Addam Higgins"}}]}
 </script>
 <script src="js/jah-talk-fallback.js"></script>
+<script src="js/cover-art.js"></script>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -131,6 +132,15 @@
           border-radius: 8px; padding: 14px 16px; margin: 10px 0;
           scroll-margin-top: 64px; box-shadow: 0 1px 3px rgba(20,40,80,.06); }
   .card .num { font-size: .78em; color: #16337a; font-weight: 700; letter-spacing: .05em; }
+  /* Deterministic product-cover art: thumbnail beside the card text, painted
+     lazily as the card nears the viewport (see js/cover-art.js). */
+  .cardflex { display: flex; gap: 12px; align-items: flex-start; }
+  .cardmain { flex: 1; min-width: 0; }
+  .patcov { flex: 0 0 148px; width: 148px; }
+  .detcov { max-width: 440px; margin: 0 auto 14px; }
+  .covph { width: 100%; aspect-ratio: 4/3; background: #101725; border-radius: 10px; overflow: hidden; }
+  .covph svg { display: block; width: 100%; height: auto; }
+  @media (max-width: 560px) { .patcov { flex-basis: 104px; width: 104px; } }
   .card h3 { margin: 6px 0 8px; font-size: 1.05em; line-height: 1.35; color: #14213a; }
   .card .meta { font-size: .85em; color: #5b6b7f; }
   .card .abs { font-size: .9em; color: #33415c; margin-top: 8px; line-height: 1.55; }
@@ -833,6 +843,29 @@ function statusPill(r) {
     tip = "Rejustered by the catalog: normalized, hashed and indexed — the source did not specify a record type."; }
   return '<span class="statuspill ' + cls2 + '" title="' + esc(tip) + '">' + label + "</span>";
 }
+/* Deterministic product-cover art (js/cover-art.js). Covers are additive:
+   a lazy thumbnail beside the card text, and a full cover on the record
+   view. Every call is guarded so a cover failure can never break a card. */
+function patCatName(r) {
+  try {
+    if (typeof CLASS_NAMES !== "undefined") return CLASS_NAMES[r[5]] || r[5] || "General";
+  } catch (e) {}
+  return r[5] || "General";
+}
+function patCover(r) {
+  try { return window.CoverArt ? CoverArt.ph(r[0], r[1], patCatName(r)) : ""; }
+  catch (e) { return ""; }
+}
+function patCoverNow(fr) {
+  try {
+    var cn = "General";
+    try { if (typeof CLASS_NAMES !== "undefined") cn = CLASS_NAMES[fr.cpc] || fr.cpc || "General"; } catch (e2) {}
+    return window.CoverArt ? '<div class="detcov">' + CoverArt.svg(fr.pub, fr.title, cn) + "</div>" : "";
+  } catch (e) { return ""; }
+}
+function paintPatCovers(box) {
+  try { if (window.CoverArt) CoverArt.paintAll(box || document); } catch (e) {}
+}
 function card(idx) {
   var r = DATA[idx];
   var num = esc(r[0]), title = esc(r[1] || "(record title missing — under review)");
@@ -845,6 +878,7 @@ function card(idx) {
   var perma = "?patent=" + encodeURIComponent(r[0]);
   var opened = state.opened[r[9]];
   var h = '<div class="card" id="p' + idx + '" data-letter="' + r[14] + '">' +
+    '<div class="cardflex"><div class="patcov">' + patCover(r) + '</div><div class="cardmain">' +
     '<div class="num">' + num + ' &nbsp;·&nbsp; ' + esc(r[9]) + '</div>' +
     '<h3><a href="' + perma + '">' + title + "</a></h3>" +
     '<div class="meta">' +
@@ -870,11 +904,11 @@ function card(idx) {
     '<div class="airow"><input type="text" class="aiinput" placeholder="Ask about this patent&hellip;" aria-label="Ask the AI about this patent">' +
     '<button class="pbtn aisend" type="button" data-i="' + idx + '">Send</button></div>' +
     jahProvenance("Personal-AI replies generated on this page by the catalog’s rule-based responder (no external model) · from record " + r[0] + " · 2026-10-04") + "</div>" +
-    "</div>";
+    "</div></div></div>";
   return h;
 }
 function recviewHTML(fr) {
-  var L = [];
+  var L = [patCoverNow(fr)];
   function row(k, v) { if (v) L.push('<div class="rvrow"><span class="rvk">' + k + ":</span> " + esc(v) + "</div>"); }
   row("Catalog ID", fr.jah);
   row("Record hash", fr.rehash);
@@ -994,6 +1028,7 @@ function render() {
   }
   var slice = filtered.slice(0, state.shown);
   box.innerHTML = slice.map(card).join("");
+  paintPatCovers(box);
   var label = filtered.length.toLocaleString() + " of " + DATA.length.toLocaleString() + " patents";
   if (state.q.trim()) label += " &mdash; results for &ldquo;" + esc(state.q.trim()) + "&rdquo;";
   document.getElementById("count").innerHTML = label;
