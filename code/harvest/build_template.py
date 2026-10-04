@@ -1198,6 +1198,33 @@ function jumpToLetter(L) {
   var el = document.getElementById("p" + idx);
   if (el && el.scrollIntoView) el.scrollIntoView(true);
 }
+/* ==== JAH global read-aloud controller (one per page): no stacked voices, no orphan audio ==== */
+(function(){
+if(window.__JAHREAD)return;
+var R={audios:[],lastTap:0,lastLabel:""};
+R.stopAll=function(){
+ try{if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
+ try{if(window.responsiveVoice&&window.responsiveVoice.cancel)window.responsiveVoice.cancel();}catch(e){}
+ var i,a;
+ for(i=0;i<R.audios.length;i++){a=R.audios[i];try{a.pause();}catch(e){}try{a.removeAttribute("src");}catch(e){}try{a.load();}catch(e){}}
+ R.audios.length=0;
+ var els=document.querySelectorAll("audio");
+ for(i=0;i<els.length;i++){try{els[i].pause();}catch(e){}}
+};
+R.reg=function(a){if(a&&R.audios.indexOf(a)<0)R.audios.push(a);return a;};
+R.playGuard=function(label){
+ var now=Date.now();
+ if(now-R.lastTap<450&&label===R.lastLabel){R.lastTap=0;R.lastLabel="";R.stopAll();return false;}
+ R.lastTap=now;R.lastLabel=String(label||"");
+ R.stopAll();return true;
+};
+try{
+ var NativeAudio=window.Audio;
+ window.Audio=function(src){var a=src===undefined?new NativeAudio():new NativeAudio(src);R.reg(a);return a;};
+ window.Audio.prototype=NativeAudio.prototype;
+}catch(e){}
+window.__JAHREAD=R;
+})();
 /* ---- per-patent read-aloud (tiered: built-in voice, else online voice hosts) ---- */
 var readingBtn = null;
 function hasSpeech2(){ try { return ("speechSynthesis" in window) && !!window.speechSynthesis && typeof window.speechSynthesis.speak === "function"; } catch(e){ return false; } }
@@ -1232,6 +1259,7 @@ function fxPlay2(list, i, tier, retry, done){
   try { var pr=a.play(); if (pr&&pr.catch) pr.catch(function(){}); } catch(e){}
 }
 function stopAudio2(){
+  try{if(window.__JAHREAD)window.__JAHREAD.stopAll();}catch(e){}
   try { if (hasSpeech2()) window.speechSynthesis.cancel(); } catch(e){}
   FX2.active=false;
   if (FX2.audio){ try { FX2.audio.pause(); } catch(e){} FX2.audio=null; }
@@ -1239,6 +1267,7 @@ function stopAudio2(){
     readingBtn.innerHTML = dl ? dl : "\\uD83D\\uDD0A Read aloud"; readingBtn=null; }
 }
 function readText2(text, btn, done){
+  if(window.__JAHREAD&&!window.__JAHREAD.playGuard("readText2"))return;
   stopAudio2();
   if (btn && !btn.getAttribute("data-label")) btn.setAttribute("data-label", btn.innerHTML);
   if (!text || !text.trim()){ if(done)done(); return; }
