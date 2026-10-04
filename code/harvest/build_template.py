@@ -160,7 +160,7 @@ def cataloglink_html(page, count):
     if page == "catalog":
         return ('<span class="catlink-here">You are browsing the full catalog &mdash; '
                 '<a href="#archive">jump to the A&ndash;Z archive &#8595;</a></span>')
-    return ('<a class="catlink" href="catalog.html">&#128214; Browse the full patent archive A&ndash;Z</a>'
+    return ('<a class="catlink" href="catalog.html#archive">&#128214; Browse all patents A&ndash;Z</a>'
             '<span class="catlink-sub">%s patents &middot; by title letter &middot; no search needed</span>'
             % f"{count:,}")
 
