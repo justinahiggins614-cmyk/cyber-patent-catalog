@@ -969,7 +969,7 @@ __ARCHIVE__
 <a href="https://justinahiggins614-cmyk.github.io/signature-backend/" target="_blank" rel="noopener">14 The Signature AI Mad Scientist Creation Lab</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-boundless-generators/" target="_blank" rel="noopener">15 The Signature Boundless Generator Archive</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-ai-mixlab/" target="_blank" rel="noopener">16 The Signature AI Mix Lab</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-olypics/" target="_blank" rel="noopener">17 AI Olypics</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-olypics/" target="_blank" rel="noopener">17 AI Olympics</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-chip-maker/" target="_blank" rel="noopener">18 The Signature Computer Chip Maker and Archive</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-app-archive/" target="_blank" rel="noopener">19 The Signature App Archive</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-ai-robot-matcher/" target="_blank" rel="noopener">20 The Signature AI Robot Matcher</a>
