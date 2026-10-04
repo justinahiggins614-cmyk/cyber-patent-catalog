@@ -299,30 +299,22 @@ html[data-theme="dark"] img,html[data-theme="dark"] video,html[data-theme="dark"
 #jah-theme-toggle:hover{opacity:1}
 </style>
 <style>
-/* UX-2026-10-03 (wave): first-time user guide — spotlight tour + ? Guide panel.
-   Additive only; the site's theme, look and vibe are untouched. */
-.pat-tour-dim { position: fixed; z-index: 90000; border: 2px solid #e8c766; border-radius: 10px;
-  box-shadow: 0 0 0 9999px rgba(8,16,34,.55); pointer-events: none; display: none;
-  transition: all .25s ease; }
-.pat-tour-card { position: fixed; z-index: 90001; left: 50%; transform: translateX(-50%);
-  bottom: 18px; width: min(430px, calc(100vw - 32px)); background: #fff; color: #1f2a37;
-  border: 1px solid #c9d4e5; border-left: 5px solid #c9a227; border-radius: 12px;
-  box-shadow: 0 10px 34px rgba(0,0,0,.35); padding: 16px 18px 14px; display: none;
-  max-height: calc(100vh - 120px); overflow-y: auto; }
-.pat-tour-card.show, .pat-tour-dim.show { display: block; }
-.pat-tour-kicker { font-size: .7em; letter-spacing: .22em; color: #16337a; font-weight: 800; margin-bottom: 6px; }
-.pat-tour-title { font-size: 1.05em; font-weight: 800; color: #14213a; margin: 0 0 8px; }
-.pat-tour-body { font-size: .88em; line-height: 1.65; color: #33415c; }
-.pat-tour-body p { margin: 0 0 8px; }
-.pat-tour-body .tlab { font-weight: 800; color: #16337a; font-size: .78em; letter-spacing: .06em; }
-.pat-tour-nav { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
-.pat-tour-nav button { min-height: 44px; padding: 10px 16px; border-radius: 8px; font-size: .92em;
-  font-weight: 700; cursor: pointer; border: 1px solid #16337a; }
-.pat-tour-next { background: #16337a; color: #fff; flex: 1; }
-.pat-tour-back { background: #fff; color: #16337a; }
-.pat-tour-skip { background: none; border: none; color: #5b6b7f; cursor: pointer;
-  font-size: .85em; padding: 10px 6px; min-height: 44px; text-decoration: underline; }
-.pat-tour-progress { font-size: .78em; color: #8a97a8; margin-left: auto; }
+/* TOUR FIX 2026-10-04: centered welcome overlay. No page scrolling, no spotlight, no auto-jump. One "Got it" button. */
+.pat-wel { position: fixed; inset: 0; z-index: 90005; background: rgba(8,16,34,.68);
+  display: none; align-items: center; justify-content: center; padding: 14px; }
+.pat-wel.show { display: flex; }
+.pat-wel .wcard { width: min(560px, 96vw); max-height: 92vh; overflow: auto; background: #fff;
+  border: 2px solid #16337a; border-radius: 12px; padding: 18px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+.pat-wel .wkick { font-size: .68em; letter-spacing: .22em; color: #8a97a8; font-weight: 800; margin-bottom: 6px; }
+.pat-wel h2 { margin: 0 0 8px; color: #14213a; font-size: 1.25em; }
+.pat-wel .wlead { font-size: .9em; line-height: 1.6; color: #33415c; margin: 0 0 6px; }
+.pat-wel ol { margin: 10px 0; padding-left: 20px; }
+.pat-wel li { margin: 9px 0; font-size: .9em; line-height: 1.6; color: #33415c; }
+.pat-wel li b { color: #16337a; }
+#patwelok { display: block; width: 100%; min-height: 56px; margin-top: 12px; font-size: 1.1em;
+  font-weight: 800; border: 0; border-radius: 10px; background: #16337a; color: #fff; cursor: pointer; }
+.pat-wel .wfine { font-size: .78em; color: #8a97a8; margin: 10px 0 0; line-height: 1.5; }
+.pat-wel .wfine a { color: #16337a; }
 .pat-guide-veil { position: fixed; inset: 0; z-index: 90002; background: rgba(8,16,34,.6);
   display: none; align-items: flex-start; justify-content: center; padding: 5vh 16px; }
 .pat-guide-veil.show { display: flex; }
@@ -468,6 +460,21 @@ paint();})();
     <button type="button" class="modebtn" data-m="inventor">Inventor</button>
     <button type="button" class="modebtn" data-m="owner">Owner</button>
     <button type="button" class="guidebtn" id="guidebtn" aria-haspopup="dialog">? Guide</button>
+<div class="pat-wel" id="patwel">
+  <div class="wcard" role="dialog" aria-modal="true" aria-label="Welcome — how to use this catalog">
+    <div class="wkick">WELCOME — FIRST-TIME GUIDE</div>
+    <h2>Globally Rejustered Patent Catalog</h2>
+    <p class="wlead">Real harvested public patent records — every one the full record, not a reference stub. The page never moves while this guide is open.</p>
+    <ol>
+      <li><b>Search everything.</b> One box searches <b>numbers, titles, keywords, companies, inventors, owners</b>. The search-by-field buttons narrow which field; results update as you type.</li>
+      <li><b>Browse by invention field.</b> The <b>A–H section buttons</b> + class pills filter by field; the <b>A–Z strip</b> jumps by letter. Tap a card&#8217;s <b>title</b> to open its record.</li>
+      <li><b>Record tools.</b> Every record has <b>OPEN, SHARE, COPY, DOWNLOAD, READ ALOUD</b>, plus a personal AI that answers only from that record. The harvester adds new records every 30 minutes.</li>
+    </ol>
+    <button type="button" id="patwelok">Got it</button>
+    <p class="wfine">Tap the <b>? Guide</b> button any time to see this again. <a href="#" id="patwelfull">Open the full guide</a> for every feature.</p>
+  </div>
+</div>
+
   </div>
 </div>
 <div class="searchwrap">
@@ -1768,149 +1775,35 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
   function seen(){ try { return localStorage.getItem(SEEN_KEY) === "1"; } catch(e){ return true; } }
   function markSeen(){ try { localStorage.setItem(SEEN_KEY, "1"); } catch(e){} }
   function hasDeepLink(){ try { return !!new URLSearchParams(location.search).get("patent"); } catch(e){ return false; } }
-  var STEPS = [
-    { sel: "#q", title: "Search the whole catalog",
-      what: "This is the search box — one box for the entire catalog.",
-      does: "It searches every patent record live on your device: numbers, titles, keywords, companies, inventors, owners.",
-      how: "Type and tap Search — or just keep typing; results update as you type. Tap a result's title to open its record page." },
-    { sel: ".moderow", title: "Search by field",
-      what: "These buttons choose which field the search looks in.",
-      does: "All fields, ID / number, Title, Description, Inventor, or Owner — so an inventor's name or a company name finds its patents.",
-      how: "Tap one, then search. “All fields” is the default." },
-    { sel: "#secbtns", title: "Browse by invention field",
-      what: "The A–H buttons are the eight invention sections — agriculture, chemistry, electricity, and so on.",
-      does: "Tapping one filters the catalog to that field. A section at 0 says “not harvested yet” plainly — the harvester reaches it in order.",
-      how: "Tap a section to filter; tap it again to clear. The class pills underneath narrow it down further." },
-    { sel: "#letters", title: "Jump by letter",
-      what: "This A–Z strip jumps to titles starting with a letter.",
-      does: "Letters with no matching titles stay greyed out.",
-      how: "Tap a letter to jump to it; the arrow at the start scrolls back to the top." },
-    { sel: ".card", title: "Patent record cards",
-      what: "Every result is a public patent record — number, title, owner, inventor, dates, field.",
-      does: "The pill tells you its status: Live (granted), Pending (application), Rejustered (catalog-normalized), or Needs review. Source: Google Patents, always.",
-      how: "Tap the title for the record page, or “View full patent text” to read the record right here. “Original record →” opens the source document." },
-    { sel: ".jahrecord", title: "Record tools: share, copy, download, read aloud",
-      what: "Every card has its own tool panel: OPEN, SHARE, COPY, DOWNLOAD, READ ALOUD — plus a personal AI you can ask about the record.",
-      does: "SHARE copies a link to that exact record; COPY and DOWNLOAD save its text; READ ALOUD speaks it aloud; the AI answers only from that record and never invents facts.",
-      how: "Tap READ ALOUD to hear a record; tap again to stop. “Ask the AI” opens a chat grounded in that record alone." },
-    { sel: ".harvprog", title: "Harvest progress",
-      what: "This is the live harvest report: how many of the 122 CPC classes are harvested, the last harvest time, and the next 30-minute cycle.",
-      does: "The harvester adds new records every 30 minutes. Nothing here is ever deleted to make room.",
-      how: "If a harvest ever falls behind, this says OVERDUE honestly instead of showing a stale “next” time." },
-    { sel: "#data", title: "Data & downloads",
-      what: "Everything on this page is machine-readable as well as human-readable.",
-      does: "Full CSV export, catalog metadata, the registry feed of new batches, sitemaps, and the catalog health check — all real files.",
-      how: "Tap any link to download or inspect it. Bots and AI assistants can use these directly, no JavaScript needed." }
-  ];
-  var dim = null, card = null, veil = null, idx = 0, lastFocus = null;
-
-  function ensure(){
-    if (dim) return;
-    dim = document.createElement("div");
-    dim.className = "pat-tour-dim"; dim.setAttribute("aria-hidden", "true");
-    document.body.appendChild(dim);
-    card = document.createElement("div");
-    card.className = "pat-tour-card";
-    card.setAttribute("role", "dialog");
-    card.setAttribute("aria-modal", "false");
-    card.setAttribute("tabindex", "-1");
-    card.innerHTML =
-      '<div class="pat-tour-kicker" id="ptk">CATALOG TOUR</div>' +
-      '<h3 class="pat-tour-title" id="ptt"></h3>' +
-      '<div class="pat-tour-body" id="ptb"></div>' +
-      '<div class="pat-tour-nav">' +
-      '<button type="button" class="pat-tour-back" id="ptback">Back</button>' +
-      '<button type="button" class="pat-tour-next" id="ptnext">Next</button>' +
-      '<button type="button" class="pat-tour-skip" id="ptskip">Skip tour</button>' +
-      '<span class="pat-tour-progress" id="ptprog"></span></div>';
-    document.body.appendChild(card);
-    document.getElementById("ptback").onclick = function(){ show(idx - 1); };
-    document.getElementById("ptnext").onclick = function(){
-      if (idx >= liveSteps().length - 1) end(true); else show(idx + 1);
-    };
-    document.getElementById("ptskip").onclick = function(){ end(true); };
-    card.addEventListener("keydown", function(e){
-      if (e.key === "Escape" || e.key === "Esc") { e.preventDefault(); end(true); }
-      else if (e.key === "ArrowRight") { e.preventDefault();
-        if (idx >= liveSteps().length - 1) end(true); else show(idx + 1); }
-      else if (e.key === "ArrowLeft") { e.preventDefault(); show(idx - 1); }
+/* ---- TOUR FIX 2026-10-04: first-visit WELCOME OVERLAY ----
+     Centered guide. The page NEVER scrolls, spotlights, or jumps.
+     One "Got it" button dismisses; the "? Guide" button re-opens it any time. */
+  var wel = null, wlastFocus = null;
+  function ensureWel(){
+    wel = document.getElementById("patwel");
+    if (!wel || wel.getAttribute("data-wired")) return;
+    wel.setAttribute("data-wired", "1");
+    document.getElementById("patwelok").onclick = function(){ closeWel(); };
+    wel.addEventListener("click", function(e){ if (e.target === wel) closeWel(); });
+    wel.addEventListener("keydown", function(e){
+      if (e.key === "Escape" || e.key === "Esc") { e.preventDefault(); closeWel(); }
     });
+    var fl = document.getElementById("patwelfull");
+    if (fl) fl.onclick = function(e){ try{ e.preventDefault(); }catch(e2){} closeWel(); openGuide(); };
   }
-  /* Steps whose target exists right now (cards only exist after results render). */
-  var stepCache = null;
-  function liveSteps(){
-    if (!stepCache) {
-      stepCache = STEPS.filter(function(s){
-        try { return !!document.querySelector(s.sel); } catch(e){ return false; }
-      });
-    }
-    return stepCache;
+  function openWel(){
+    ensureWel();
+    if (!wel) return;
+    wlastFocus = document.activeElement;
+    wel.classList.add("show");
+    try { document.getElementById("patwelok").focus({ preventScroll: true }); }
+    catch(e){ try { document.getElementById("patwelok").focus(); } catch(e2){} }
   }
-  function place(step){
-    var el = null;
-    try { el = document.querySelector(step.sel); } catch(e){}
-    if (!el) return false;
-    try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch(e2){
-      try { el.scrollIntoView(true); } catch(e3){}
-    }
-    var r = el.getBoundingClientRect(), pad = 8;
-    dim.style.left = Math.max(4, r.left - pad) + "px";
-    dim.style.top = Math.max(4, r.top - pad) + "px";
-    dim.style.width = (r.width + pad * 2) + "px";
-    dim.style.height = (r.height + pad * 2) + "px";
-    return true;
-  }
-  function show(i){
-    var steps = liveSteps();
-    if (i < 0) i = 0;
-    if (i >= steps.length) { end(true); return; }
-    idx = i;
-    var s = steps[i], ok = place(s);
-    if (!ok) { end(false); return; }
-    document.getElementById("ptk").textContent = "CATALOG TOUR";
-    document.getElementById("ptt").textContent = s.title;
-    document.getElementById("ptb").innerHTML =
-      '<p><span class="tlab">WHAT IT IS:</span> ' + escHtml(s.what) + "</p>" +
-      '<p><span class="tlab">WHAT IT DOES:</span> ' + escHtml(s.does) + "</p>" +
-      '<p><span class="tlab">HOW TO USE IT:</span> ' + escHtml(s.how) + "</p>";
-    document.getElementById("ptback").style.visibility = i === 0 ? "hidden" : "visible";
-    document.getElementById("ptnext").textContent = (i === steps.length - 1) ? "Finish" : "Next";
-    document.getElementById("ptskip").textContent = "Skip tour";
-    document.getElementById("ptprog").textContent = "Step " + (i + 1) + " of " + steps.length;
-    dim.classList.add("show"); card.classList.add("show");
-    try { card.focus({ preventScroll: true }); } catch(e){ try { card.focus(); } catch(e2){} }
-  }
-  function intro(){
-    ensure();
-    idx = -1;
-    document.getElementById("ptk").textContent = "WELCOME";
-    document.getElementById("ptt").textContent = "New to the catalog? Take the 1-minute tour";
-    document.getElementById("ptb").innerHTML =
-      "<p>Eight quick stops: <b>search</b>, <b>search-by-field</b>, <b>browse by invention field</b>, " +
-      "the <b>A–Z jump bar</b>, <b>record cards</b>, <b>share / copy / download / read aloud</b>, " +
-      "<b>harvest progress</b>, and <b>data downloads</b>.</p>" +
-      "<p>It takes about a minute. You can replay it any time from the <b>? Guide</b> button by the search box.</p>";
-    document.getElementById("ptback").style.visibility = "hidden";
-    document.getElementById("ptnext").textContent = "Start tour";
-    document.getElementById("ptskip").textContent = "Skip";
-    document.getElementById("ptprog").textContent = "";
-    document.getElementById("ptnext").onclick = function(){ show(0); rewireNext(); };
-    card.classList.add("show");
-    try { card.focus({ preventScroll: true }); } catch(e){ try { card.focus(); } catch(e2){} }
-  }
-  function rewireNext(){
-    document.getElementById("ptnext").onclick = function(){
-      if (idx >= liveSteps().length - 1) end(true); else show(idx + 1);
-    };
-  }
-  function end(mark){
-    if (dim) dim.classList.remove("show");
-    if (card) card.classList.remove("show");
-    if (mark) markSeen();
-    stepCache = null;
-  }
-  function escHtml(s){
-    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function closeWel(){
+    if (wel) wel.classList.remove("show");
+    markSeen();
+    if (wlastFocus && wlastFocus.focus) { try { wlastFocus.focus(); } catch(e){} }
+    wlastFocus = null;
   }
 
   /* ---- permanent ? Guide panel ---- */
@@ -1962,7 +1855,7 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
       "(the build gates that force every public count to agree).</p>" +
       "<p>Deep links work everywhere: <b>?patent=US10000000B2</b> opens that record directly. A bad or unknown ID gets an " +
       "explicit “not found” message — never a blank page.</p>");
-    h += '<button type="button" class="pat-guide-close" id="pgreplay" style="background:#fff;color:#16337a;border:1px solid #16337a;margin-bottom:4px">Replay the 1-minute tour</button>';
+    h += '<button type="button" class="pat-guide-close" id="pgreplay" style="background:#fff;color:#16337a;border:1px solid #16337a;margin-bottom:4px">Replay the welcome guide</button>';
     h += '<button type="button" class="pat-guide-close" id="pgclose">Close guide</button>';
     return h;
   }
@@ -1974,7 +1867,7 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
       guideHTML() + '</div>';
     document.body.appendChild(veil);
     document.getElementById("pgclose").onclick = closeGuide;
-    document.getElementById("pgreplay").onclick = function(){ closeGuide(); stepCache = null; show(0); };
+    document.getElementById("pgreplay").onclick = function(){ closeGuide(); openWel(); };
     veil.addEventListener("click", function(e){ if (e.target === veil) closeGuide(); });
     veil.addEventListener("keydown", function(e){
       if (e.key === "Escape" || e.key === "Esc") { e.preventDefault(); closeGuide(); }
@@ -1998,7 +1891,7 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
     var gb = document.getElementById("guidebtn");
     if (gb && !gb.getAttribute("data-wired")) {
       gb.setAttribute("data-wired", "1");
-      gb.addEventListener("click", openGuide);
+      gb.addEventListener("click", openWel);
     }
   }
   wire();
@@ -2010,7 +1903,7 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
       clearInterval(iv);
       wire();
       if (!seen() && !hasDeepLink() && window.DATA && DATA.length) {
-        setTimeout(function(){ ensure(); intro(); }, 1500);
+        setTimeout(function(){ openWel(); }, 1500);
       }
     }
   }, 250);
