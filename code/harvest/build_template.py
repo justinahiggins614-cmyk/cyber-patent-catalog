@@ -638,6 +638,8 @@ details.az[open] > summary .azhint { display: none; }
 </style>
 </head>
 <body>
+<!-- HERO BANNER -->
+<img src="assets/hero.jpg" alt="Globally Rejustered Patent Catalog — hero banner" style="width:100%;height:auto;display:block">
 <button id="jah-theme-toggle" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">&#9681;</button>
 <script>
 /* UX-2026-10-03: dark-mode toggle wiring (opt-in; default look unchanged) */
@@ -646,34 +648,7 @@ function paint(){try{b.innerHTML=(document.documentElement.dataset.theme==="dark
 b.addEventListener("click",function(){try{var d=document.documentElement;var dark=d.dataset.theme!=="dark";d.dataset.theme=dark?"dark":"";localStorage.setItem("jah-theme",dark?"dark":"light");}catch(e){}paint();});
 paint();})();
 </script>
-<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 8 OF 27</span>
-<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Phone Book</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Calculator</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">Dictionary</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">JAH-N Wiki</a>
-<span class="jahnet-cur">Globally Rejustered Patent Catalog</span>
-<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/specs.html">Spec Catalog</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-llama/">Signature Llama</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-computer-systems/">PC Depository</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-cyber-mega-mall/">Cyber Mega-Mall</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-university/">Signature University</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-books/">Book Depository</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-comics/">Comic Store</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-newspapers/">Global Newspaper Archive</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-3d-print/">3D Print Depository</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-backend/">Mad Scientist Lab</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-boundless-generators/">Boundless Generator Archive</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-mixlab/">AI Mix Lab</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-olypics/">AI Olypics</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-chip-maker/">Chip Maker and Archive</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-app-archive/">App Archive</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-robot-matcher/">AI Robot Matcher</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-experiment-solver/">Experiment Solver</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-image-video-maker/">Signature AI Pixel</a>
-<a href="https://justinahiggins614-cmyk.github.io/signature-ai-song-maker/">Signature Music Studio</a>
 
-</div></nav>
 <header>
   <div class="seal">&#167;</div>
   <p class="eyebrow">PUBLIC RECORDS INDEX</p>
@@ -812,6 +787,36 @@ __ARCHIVE__
     </dl>
   </div>
 </section>
+<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 8 OF 27</span>
+<a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/">The Signature AI Phone Book</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-calculator/">Calculator</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/">Dictionary</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-wiki/">JAH Wiki</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/">JAH-N Wiki</a>
+<span class="jahnet-cur">Globally Rejustered Patent Catalog</span>
+<a href="https://justinahiggins614-cmyk.github.io/signature-one-archive/specs.html">Spec Catalog</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-llama/">Signature Llama</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-computer-systems/">PC Depository</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-cyber-mega-mall/">Cyber Mega-Mall</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-university/">Signature University</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-books/">Book Depository</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-comics/">Comic Store</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-newspapers/">Global Newspaper Archive</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-3d-print/">3D Print Depository</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-backend/">Mad Scientist Lab</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-boundless-generators/">Boundless Generator Archive</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-mixlab/">AI Mix Lab</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-olypics/">AI Olypics</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-chip-maker/">Chip Maker and Archive</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-app-archive/">App Archive</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-robot-matcher/">AI Robot Matcher</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-experiment-solver/">Experiment Solver</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-image-video-maker/">Signature AI Pixel</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-ai-song-maker/">Signature Music Studio</a>
+
+</div></nav>
+<!-- JAH STANDARD SIGNATURE STAMP -->
+<div style="text-align:center;padding:14px 12px 4px"><img src="assets/signature-stamp.jpg" alt="The official Signature stamp" style="width:120px;max-width:32%;height:auto"></div>
 <footer>
   <div class="fname">Globally Rejustered Patent Catalog</div>
   <p>An independent index of publicly available patent records, cataloged for compatibility
