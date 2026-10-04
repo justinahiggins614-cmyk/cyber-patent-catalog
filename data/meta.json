@@ -1,6 +1,6 @@
 {
  "catalog_version": "GRPC-20261004",
- "record_count": 60313,
+ "record_count": 60566,
  "last_updated": "2026-10-04",
  "source_snapshot": "Google Patents public records, 1976-2026. Target scope: CPC sections A-H (122 classes). PARTIAL HARVEST: 12 of 122 classes harvested so far; see harvest_scope.",
  "harvest_scope": {
@@ -24,9 +24,9 @@
   "current_class": "A45",
   "coverage_note": "A class not listed here has not been harvested yet; a section showing 0 records means 'not yet harvested', never 'no patents exist'."
  },
- "catalog_hash": "sha256:8366087a0dcbac3daf86c97f4ec92b3f916beb75abc86d2f686f39a21ea54d98",
+ "catalog_hash": "sha256:ed3a21228f1acf892ee62f2b805e52db2fb30aeeb0140dec2bf11e6cc4cfd05c",
  "sections": {
-  "A": 58839,
+  "A": 59092,
   "H": 1474
  },
  "areas_covered": 12,
