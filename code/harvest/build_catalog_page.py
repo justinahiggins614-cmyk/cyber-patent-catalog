@@ -5,7 +5,12 @@ Run from the repo root:  python3 code/harvest/build_catalog_page.py
 Reads data/patents.jsonl and writes:
   data/patents.search.json.gz  compact search index (titles/numbers/meta + byte offsets)
   data/meta.json               authoritative catalog metadata
-  index.html / catalog.html    small app shell (~90KB) — the dataset is NOT inlined
+  index.html / catalog.html    app shell — the dataset is NOT inlined; the A–Z
+                               archive's letter lists lazy-render client-side
+                               from the search index (counts + top-5 samples
+                               stamped at build). index.html carries a prominent
+                               link to catalog.html; catalog.html shows the
+                               matching "you are here" note.
 
 The browser loads the search index (~1-3MB gz) then fetches individual full
 records on demand via HTTP Range requests against data/patents.jsonl, using
@@ -307,11 +312,14 @@ def main():
         json.dump(meta, f, indent=1)
     print("meta:", json.dumps(meta))
 
-    html = build_html(meta, harv, enriched, last_ts=harv.get("last_ts"))
-    for dst in (DST, DST2):
-        with open(dst, "w", encoding="utf-8") as f:
-            f.write(html)
-    print("wrote %s + catalog.html (%d KB each)" % (DST, os.path.getsize(DST) // 1024))
+    html_index = build_html(meta, harv, enriched, last_ts=harv.get("last_ts"), page="index")
+    html_catalog = build_html(meta, harv, enriched, last_ts=harv.get("last_ts"), page="catalog")
+    with open(DST, "w", encoding="utf-8") as f:
+        f.write(html_index)
+    with open(DST2, "w", encoding="utf-8") as f:
+        f.write(html_catalog)
+    print("wrote %s (%d KB) + catalog.html (%d KB)" % (
+        DST, os.path.getsize(DST) // 1024, os.path.getsize(DST2) // 1024))
 
     # The wiki's ?page=PAT: articles fetch patent records by byte range via
     # data/patents.idx.json.gz — rebuild it AFTER patents.jsonl was rewritten,

@@ -338,6 +338,64 @@ html[data-theme="dark"] img,html[data-theme="dark"] video,html[data-theme="dark"
   border-radius: 8px; border: none; background: #16337a; color: #fff; font-weight: 700;
   font-size: .95em; cursor: pointer; }
 </style>
+<style>
+/* A-Z ARCHIVE + collapsible group pills (network order 2026-10-04).
+   Additive only: desktop renders exactly as before; phones get tidy
+   collapsible sections and lazy-loading letter lists. */
+.catlinkrow { margin-top: 14px; text-align: center; }
+.catlink { display: inline-block; padding: 11px 24px; border-radius: 999px;
+  background: #c9a227; color: #0d2149; font-weight: 800; font-size: .95em;
+  text-decoration: none; border: 2px solid #e8c766; }
+.catlink:hover { background: #e8c766; }
+.catlink-sub { display: block; margin-top: 8px; font-size: .78em; color: #d9b84a; }
+.catlink-here { display: inline-block; font-size: .85em; color: #e8c766; font-weight: 700;
+  letter-spacing: .04em; }
+.catlink-here a { color: #e8c766; }
+/* BROWSE BY GROUP: desktop renders exactly as before (summary hidden, always
+   open); on phones it becomes a collapsible bar, collapsed by default. */
+details.sectoggle { border: 0; padding: 0; margin: 16px 0 4px; }
+details.sectoggle > .sectoggle-s { display: none; }
+@media (max-width: 767px) {
+  details.sectoggle > .sectoggle-s { display: block; cursor: pointer; font-size: .85em;
+    letter-spacing: .08em; color: #33507e; font-weight: 700; text-align: center;
+    padding: 12px 4px; border: 1px dashed #9fb2c8; border-radius: 8px;
+    margin: 0 0 8px; min-height: 44px; background: #fff; }
+}
+/* The A-Z archive: clean letter lists, product-forward. */
+#archive .azintro { margin: 0 0 6px; color: #33415c; font-size: .9em; line-height: 1.6; }
+details.az { border: 1px solid #d3dce6; border-radius: 8px; margin: 8px 0; background: #fbfdff; }
+details.az > summary { padding: 10px 14px; cursor: pointer; font-weight: 700; color: #16337a;
+  font-size: .95em; min-height: 44px; display: flex; align-items: center; gap: 10px;
+  list-style: none; }
+details.az > summary::-webkit-details-marker { display: none; }
+details.az > summary .azl { display: inline-block; min-width: 36px; text-align: center;
+  background: #16337a; color: #fff; border-radius: 8px; padding: 7px 0; font-size: 1.05em; }
+details.az > summary .azcount { color: #5b6b7f; font-weight: 400; font-size: .85em; }
+details.az > summary .azhint { margin-left: auto; font-size: .75em; font-weight: 600;
+  color: #8a97a8; letter-spacing: .06em; }
+details.az[open] > summary .azhint { display: none; }
+.azlist { padding: 0 14px 4px; }
+.azrow { padding: 10px 2px; border-top: 1px solid #e3eaf3; }
+.azrow:first-child { border-top: 0; }
+.azrow .azt { font-weight: 700; color: #1d4ed8; text-decoration: none; font-size: .95em;
+  line-height: 1.4; }
+.azrow .azt:hover { text-decoration: underline; }
+.azrow .azmeta { font-size: .8em; color: #5b6b7f; margin-top: 3px; line-height: 1.5; }
+.azsample { margin: 2px 14px 12px 36px; padding: 0; font-size: .88em; color: #33415c; }
+.azsample li { margin: 7px 0; line-height: 1.5; }
+.azsample a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
+.azsample a:hover { text-decoration: underline; }
+.azsample .azmeta { color: #5b6b7f; font-size: .85em; }
+.azmore { display: block; margin: 10px auto 14px; padding: 11px 24px; border-radius: 8px;
+  border: 1px solid #16337a; background: #fff; color: #16337a; font-weight: 700;
+  cursor: pointer; font-size: .9em; }
+.azmore:hover { background: #e8eefb; }
+@media (max-width: 767px) {
+  details.az > summary { padding: 12px 10px; }
+  .azrow .azt { font-size: .92em; }
+  .catlink { width: calc(100% - 32px); }
+}
+</style>
 </head>
 <body>
 <button id="jah-theme-toggle" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">&#9681;</button>
@@ -394,6 +452,7 @@ paint();})();
   <div class="langrow">&#127760; Language: <span id="google_translate_element"></span></div>
   <div class="harvestline" data-last-ts="1791089991">Patent records currently indexed: <b>60,824</b><span class="sep">·</span>Harvesting: <b>ongoing</b><span class="sep">·</span>Last harvest: <b>Oct 4, 2026, 12:59 AM ET</b><span class="sep">·</span>Next harvest: <b class="js-next-harvest">Oct 4, 2026, 1:29 AM ET</b> (every 30 min)<span class="sep">·</span>Counts verified at build: <b>GRPC-20261004</b></div>
   <div class="harvprog" role="img" aria-label="Harvest progress: 12 of 122 CPC classes harvested; currently harvesting A45"><div class="harvprog-track"><div class="harvprog-fill" style="width:10%"></div></div><div class="harvprog-label">Harvest progress: <b>12 of 122 CPC classes</b>; currently harvesting <b>A45</b> (class 10 of 122) &middot; sections at 0 are queued, not empty</div></div>
+  <div class="catlinkrow"><span class="catlink-here">You are browsing the full catalog &mdash; <a href="#archive">jump to the A&ndash;Z archive &#8595;</a></span></div>
 </header>
 <div class="searchbar" id="searchbar">
   <div class="searchrow">
@@ -412,10 +471,9 @@ paint();})();
   </div>
 </div>
 <div class="searchwrap">
-  <div class="groups">
-    <div class="gtitle">BROWSE BY GROUP</div>
+  <details class="sectoggle" open><summary class="sectoggle-s">BROWSE BY GROUP</summary>
     <div class="secbtns" id="secbtns"><button type="button" class="secbtn" data-s="A">A · Human necessities<span class="seccount">59,350</span><span class="secstat">Indexed · harvest in progress (A45 · class 10 of 122)</span></button><button type="button" class="secbtn queued" data-s="B">B · Performing operations; transporting<span class="seccount">0</span><span class="secstat">This section has not been harvested yet · class #16 of 122 up next</span></button><button type="button" class="secbtn queued" data-s="C">C · Chemistry; metallurgy<span class="seccount">0</span><span class="secstat">This section has not been harvested yet · class #52 of 122 up next</span></button><button type="button" class="secbtn queued" data-s="D">D · Textiles; paper<span class="seccount">0</span><span class="secstat">This section has not been harvested yet · class #71 of 122 up next</span></button><button type="button" class="secbtn queued" data-s="E">E · Fixed constructions<span class="seccount">0</span><span class="secstat">This section has not been harvested yet · class #79 of 122 up next</span></button><button type="button" class="secbtn queued" data-s="F">F · Mechanical engineering<span class="seccount">0</span><span class="secstat">This section has not been harvested yet · class #86 of 122 up next</span></button><button type="button" class="secbtn queued" data-s="G">G · Physics<span class="seccount">0</span><span class="secstat">This section has not been harvested yet · class #103 of 122 up next</span></button><button type="button" class="secbtn" data-s="H">H · Electricity<span class="seccount">1,474</span><span class="secstat">Indexed</span></button></div>
-  </div>
+  </details>
   <p class="coveragenote">Coverage is live and growing: the harvester works through the CPC classification (sections A&ndash;H) in order, so sections showing records have been harvested so far, while sections at 0 are queued and fill in as the harvest reaches them. Classes harvested so far: A01 (Agriculture &amp; forestry), A21 (Baking), A22 (Butchery &amp; meat), A23 (Foods &amp; foodstuffs), A24 (Tobacco), A41 (Clothing), A42 (Headwear), A43 (Footwear), A44 (Jewellery &amp; haberdashery), A45 (Luggage &amp; hand articles), H04L63 (Network security), H04L9 (Cryptography). A &ldquo;patent record&rdquo; here is the public publication record &mdash; number, title, abstract, owner, inventor, dates and classification &mdash; harvested from Google Patents. Nothing is invented: every record is a real harvested public record.</p>
   <div class="filters" id="filters"></div>
   <div class="sortrow"><label for="sort">Sort:</label>
@@ -442,6 +500,7 @@ it is an independent index of public patent records.</p>
 <h2 class="sr-only" id="resultshead">Patent records</h2>
 <div id="results"><p class="nores" id="bootmsg"><h3>Loading the catalog index&hellip;</h3></p></div>
 <button id="more" type="button" style="display:none">Show more</button>
+<section class="infosection" id="archive" aria-label="Browse the full patent archive A to Z"><h2>Browse the patent archive A&ndash;Z</h2><div class="infocard"><p class="azintro">Every patent in the catalog, filed by the first letter of its title &mdash; open a letter and browse the records. They load as you open them, so this page stays fast on any phone. Every title links to its full record.</p><details class="az" data-az="A"><summary><span class="azl">A</span><span class="azcount">6,369 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="A"></div><ol class="azsample"><li><a href="?patent=ITTO20080132A1">&quot;ADJUSTMENT DEVICE FOR THE INCLINE OF A FRONT FORK OF A TWO OR THREE-WHEEL …</a> <span class="azmeta">ITTO20080132A1 · Published 2009-08-23</span></li><li><a href="?patent=DE3201731A1">&quot;AEROBIC HARDENING PLASTICS&quot;</a> <span class="azmeta">DE3201731A1 · Published 1983-07-28</span></li><li><a href="?patent=AU2021209379B2">(Aziridinyl hydroxy)-functional organic compounds</a> <span class="azmeta">AU2021209379B2 · Published 2025-09-04</span></li><li><a href="?patent=EP4093787B1">(aziridinyl hydroxy)-functional organic compounds</a> <span class="azmeta">EP4093787B1 · Published 2023-10-11</span></li><li><a href="?patent=CA2087650A1">.alpha.-aryl-.alpha.-hydroxy-.beta.-imidazolinyl-propionamides</a> <span class="azmeta">CA2087650A1 · Published 1993-07-24</span></li></ol></details><details class="az" data-az="B"><summary><span class="azl">B</span><span class="azcount">1,451 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="B"></div><ol class="azsample"><li><a href="?patent=DE3133410A1">&quot;BLOOD PRESSURE MEASURING DEVICE&quot;</a> <span class="azmeta">DE3133410A1 · Published 1982-04-08</span></li><li><a href="?patent=MXPA98010095A">. best shoes</a> <span class="azmeta">MXPA98010095A · Published 1999-06-01</span></li><li><a href="?patent=CA2285701C">.beta.-catenin, tcf-4, and apc interact to prevent cancer</a> <span class="azmeta">CA2285701C · Published 2013-09-17</span></li><li><a href="?patent=CN221770996U">&lt;b&gt;A 24&lt;/b&gt;-hour urine collection device</a> <span class="azmeta">CN221770996U · Published 2024-09-27</span></li><li><a href="?patent=US5095094A">&lt;b&gt;A43&lt;/b&gt; kDa antigenic protein of Bordetella recognized by polyclonal antibodies to …</a> <span class="azmeta">US5095094A · Published 1992-03-10</span></li></ol></details><details class="az" data-az="C"><summary><span class="azl">C</span><span class="azcount">5,292 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="C"></div><ol class="azsample"><li><a href="?patent=RU2483643C1">&quot;cabbage rolls filled with mussels&quot; preserves production method</a> <span class="azmeta">RU2483643C1 · Published 2013-06-10</span></li><li><a href="?patent=ES2255456B1">&quot;CHOCOLATE AROMA EXTRACT&quot;.</a> <span class="azmeta">ES2255456B1 · Published 2007-07-16</span></li><li><a href="?patent=DE3101080A1">&quot;CLUTCH FOR A POWER TOOL&quot;</a> <span class="azmeta">DE3101080A1 · Published 1982-01-07</span></li><li><a href="?patent=DE3100961A1">&quot;COLOR PHOTOGRAPHIC SILVER HALOGENIDE MATERIAL&quot;</a> <span class="azmeta">DE3100961A1 · Published 1981-12-24</span></li><li><a href="?patent=BR112012018010B1">&quot;conjunto para prender tecido ou um elemento protético em uma abertura …</a> <span class="azmeta">BR112012018010B1 · Published 2020-10-13</span></li></ol></details><details class="az" data-az="D"><summary><span class="azl">D</span><span class="azcount">2,779 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="D"></div><ol class="azsample"><li><a href="?patent=SU1189877A1">&quot;dezbel&quot; disinfecting and bleaching agent</a> <span class="azmeta">SU1189877A1 · Published 1985-11-07</span></li><li><a href="?patent=CA2179176A1">.delta.12,13-iso-taxol analogs, antineoplastic use and pharmaceutical …</a> <span class="azmeta">CA2179176A1 · Published 1995-08-03</span></li><li><a href="?patent=AU540094B2">D-amino acid amides</a> <span class="azmeta">AU540094B2 · Published 1984-11-01</span></li><li><a href="?patent=AU8835682A">D-amino acid amides</a> <span class="azmeta">AU8835682A · Published 1982-12-23</span></li><li><a href="?patent=NZ203176A">D-amino acid amides</a> <span class="azmeta">NZ203176A · Published 1984-07-06</span></li></ol></details><details class="az" data-az="E"><summary><span class="azl">E</span><span class="azcount">1,913 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="E"></div><ol class="azsample"><li><a href="?patent=ITME970021A1">&quot;ECLIPSE&quot; PORTABLE OBJECTS TROUSSE</a> <span class="azmeta">ITME970021A1 · Published 1999-05-03</span></li><li><a href="?patent=DE3102106A1">&quot;ELECTRICAL CONNECTION OF SEMICONDUCTOR CABLES&quot;</a> <span class="azmeta">DE3102106A1 · Published 1982-01-07</span></li><li><a href="?patent=DE3129011A1">&quot;ELECTRONIC TRANSLATION DEVICE&quot;</a> <span class="azmeta">DE3129011A1 · Published 1982-03-18</span></li><li><a href="?patent=RU2506000C2">&quot;elite&quot; fish roll production method</a> <span class="azmeta">RU2506000C2 · Published 2014-02-10</span></li><li><a href="?patent=CN104761500B">(E) preparation method of 4 (1 imidazolmethyl) methyl cinnamates</a> <span class="azmeta">CN104761500B · Published 2017-11-21</span></li></ol></details><details class="az" data-az="F"><summary><span class="azl">F</span><span class="azcount">2,147 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="F"></div><ol class="azsample"><li><a href="?patent=JPH0720097B2">F / S bit synchronization establishment method</a> <span class="azmeta">JPH0720097B2 · Published 1995-03-06</span></li><li><a href="?patent=CN301951124S">Fabric (&lt;b&gt;a42&lt;/b&gt;)</a> <span class="azmeta">CN301951124S · Published 2012-06-13</span></li><li><a href="?patent=CN301951123S">Fabric (&lt;b&gt;a44&lt;/b&gt;)</a> <span class="azmeta">CN301951123S · Published 2012-06-13</span></li><li><a href="?patent=CN301421633S">Fabric (&lt;b&gt;a45&lt;/b&gt;)</a> <span class="azmeta">CN301421633S · Published 2010-12-29</span></li><li><a href="?patent=US20180371653A1">Fabric and fiber product</a> <span class="azmeta">US20180371653A1 · Published 2018-12-27</span></li></ol></details><details class="az" data-az="G"><summary><span class="azl">G</span><span class="azcount">1,027 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="G"></div><ol class="azsample"><li><a href="?patent=DE3201661A1">&quot;Grosse rote Fleischtomate&quot;, and &quot;Weiterzüchtung 1981&quot; bred from it</a> <span class="azmeta">DE3201661A1 · Published 1983-09-08</span></li><li><a href="?patent=AU597932B2">(Gem-heterocyclodimethanamine-N,N') platinum complexes</a> <span class="azmeta">AU597932B2 · Published 1990-06-14</span></li><li><a href="?patent=JPH06503961A">G protein-coupled glutamate receptor</a> <span class="azmeta">JPH06503961A · Published 1994-05-12</span></li><li><a href="?patent=JP5340242B2">G protein-related mutants in essential hypertension</a> <span class="azmeta">JP5340242B2 · Published 2013-11-13</span></li><li><a href="?patent=US9344323B2">G.8032 ethernet multiple fault recovery mechanisms</a> <span class="azmeta">US9344323B2 · Published 2016-05-17</span></li></ol></details><details class="az" data-az="H"><summary><span class="azl">H</span><span class="azcount">1,932 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="H"></div><ol class="azsample"><li><a href="?patent=JP5649454B2">(Hetero) aryl-p-quinone derivatives for the treatment of mitochondrial diseases</a> <span class="azmeta">JP5649454B2 · Published 2015-01-07</span></li><li><a href="?patent=US4019865A">H2 S indicator</a> <span class="azmeta">US4019865A · Published 1977-04-26</span></li><li><a href="?patent=US6002066A">H2-M modified transgenic mice</a> <span class="azmeta">US6002066A · Published 1999-12-14</span></li><li><a href="?patent=DE102018100874B4">Habitat for reptiles and amphibians</a> <span class="azmeta">DE102018100874B4 · Published 2019-09-05</span></li><li><a href="?patent=CN217349874U">Hacking machine with anti-falling structure</a> <span class="azmeta">CN217349874U · Published 2022-09-02</span></li></ol></details><details class="az" data-az="I"><summary><span class="azl">I</span><span class="azcount">2,562 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="I"></div><ol class="azsample"><li><a href="?patent=RU1782238C">&quot;imperial&quot;-brand vodka</a> <span class="azmeta">RU1782238C · Published 1992-12-15</span></li><li><a href="?patent=DE3100655A1">&quot;INORGANIC FOAM PRODUCT&quot;</a> <span class="azmeta">DE3100655A1 · Published 1982-01-28</span></li><li><a href="?patent=AU540284B2">&quot;isoquinoline derivatives&quot;</a> <span class="azmeta">AU540284B2 · Published 1984-11-08</span></li><li><a href="?patent=EP0621778A1">$i(M. FERMENTANS) INFECTION TREATMENT</a> <span class="azmeta">EP0621778A1 · Published 1994-11-02</span></li><li><a href="?patent=JPH05189352A">I / O address conversion method</a> <span class="azmeta">JPH05189352A · Published 1993-07-30</span></li></ol></details><details class="az" data-az="J"><summary><span class="azl">J</span><span class="azcount">67 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="J"></div><ol class="azsample"><li><a href="?patent=CN1053595A">Jack</a> <span class="azmeta">CN1053595A · Published 1991-08-07</span></li><li><a href="?patent=DE7802399U1">JACK</a> <span class="azmeta">DE7802399U1 · Published 1979-09-20</span></li><li><a href="?patent=AU545913B1">Jack strut assembly</a> <span class="azmeta">AU545913B1 · Published 1985-08-08</span></li><li><a href="?patent=JP3226038U">Jacket</a> <span class="azmeta">JP3226038U · Published 2020-04-23</span></li><li><a href="?patent=CN217065437U">Jacket structure</a> <span class="azmeta">CN217065437U · Published 2022-07-29</span></li></ol></details><details class="az" data-az="K"><summary><span class="azl">K</span><span class="azcount">166 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="K"></div><ol class="azsample"><li><a href="?patent=USPP32482P2">Kalanchoe plant named ‘Dokalwilis’</a> <span class="azmeta">USPP32482P2 · Published 2020-11-17</span></li><li><a href="?patent=SE526466C2">Kall kaustik extraktion av massor avsedda för absorberande produkter</a> <span class="azmeta">SE526466C2 · Published 2005-09-20</span></li><li><a href="?patent=US5795865A">Kallikrein-inhibiting &quot;kunitz domain&quot; proteins and analogues thereof</a> <span class="azmeta">US5795865A · Published 1998-08-18</span></li><li><a href="?patent=UA14459A1">Kalmahin, antacid agent</a> <span class="azmeta">UA14459A1 · Published 1997-04-25</span></li><li><a href="?patent=KR20250112940A">Kamut spread</a> <span class="azmeta">KR20250112940A · Published 2025-07-25</span></li></ol></details><details class="az" data-az="L"><summary><span class="azl">L</span><span class="azcount">1,446 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="L"></div><ol class="azsample"><li><a href="?patent=CH705981A1">-Low-pasta and to processes for their preparation.</a> <span class="azmeta">CH705981A1 · Published 2013-07-15</span></li><li><a href="?patent=CN210981377U">L oRa wireless remote water meter</a> <span class="azmeta">CN210981377U · Published 2020-07-10</span></li><li><a href="?patent=EP0323637B1">L(-) 2,6-difluorobenzoic-n-(1,1,1-trifluoro-prop-2-yl)amide</a> <span class="azmeta">EP0323637B1 · Published 1992-12-16</span></li><li><a href="?patent=DK154652B">L-ASPARTYL-D-AMINO ACID DIPEPTIDAMIDES AND D-AMINO ACIDAMIDS FOR USE IN THEIR …</a> <span class="azmeta">DK154652B · Published 1988-12-05</span></li><li><a href="?patent=DK154342B">L-ASPARTYL-D-AMINO ACID-DIPEPTIDAMIDES AND AMINES FOR USE AS OUTLINES IN THEIR …</a> <span class="azmeta">DK154342B · Published 1988-11-07</span></li></ol></details><details class="az" data-az="M"><summary><span class="azl">M</span><span class="azcount">8,597 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="M"></div><ol class="azsample"><li><a href="?patent=US5825546A">&quot;Macro&quot; Photographic lens having long focal length and vibration compensation</a> <span class="azmeta">US5825546A · Published 1998-10-20</span></li><li><a href="?patent=DE3100469A1">&quot;METHOD FOR PRODUCING A BLUE-GREEN DYE IMAGE&quot;</a> <span class="azmeta">DE3100469A1 · Published 1981-12-03</span></li><li><a href="?patent=DE3048833A1">&quot;METHOD FOR PRODUCING POLYURETHANE ELASTOMERS&quot;</a> <span class="azmeta">DE3048833A1 · Published 1981-10-08</span></li><li><a href="?patent=IT8447612A1">&quot;MODULATOR-DEMODULATOR FOR A SET OF DATA PACKET CARRIERS&quot;.</a> <span class="azmeta">IT8447612A1 · Published 1985-07-27</span></li><li><a href="?patent=TNSN90001A1">&quot;MULTI-FUNCTION REGULATOR&quot;</a> <span class="azmeta">TNSN90001A1 · Published 1991-03-05</span></li></ol></details><details class="az" data-az="N"><summary><span class="azl">N</span><span class="azcount">1,539 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="N"></div><ol class="azsample"><li><a href="?patent=UA73685U">&quot;novinka&quot; (novelty) bars with dietetic additives and a dried apricot-pumpkin- …</a> <span class="azmeta">UA73685U · Published 2012-10-10</span></li><li><a href="?patent=CA1174684A">N - [(1-propyl)-2- pyrrolidinyl) methyl] -2- methoxy-5- sulfamoyl- benzamide, …</a> <span class="azmeta">CA1174684A · Published 1984-09-18</span></li><li><a href="?patent=PT100574B">N - {(1,3,5-TRIAZIN-2-YL) -AMINOCARBONYL} -BENZENESULFONAMIDES, PROCESS FOR …</a> <span class="azmeta">PT100574B · Published 1999-07-30</span></li><li><a href="?patent=JPS60158166A">N'-acylhydrazine-n-thiocarboxylic acid o-carbamoylmethyl esters</a> <span class="azmeta">JPS60158166A · Published 1985-08-19</span></li><li><a href="?patent=DE3400169A1">N'-ACYLHYDRAZINE-THIOCARBONIC ACID-0-CARBAMOYL METHYLESTER</a> <span class="azmeta">DE3400169A1 · Published 1985-07-11</span></li></ol></details><details class="az" data-az="O"><summary><span class="azl">O</span><span class="azcount">1,204 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="O"></div><ol class="azsample"><li><a href="?patent=DE3108677A1">&quot;OPTICALLY TRANSPARENT POLYCRYSTALLINE SINTER BODY AND METHOD FOR THE …</a> <span class="azmeta">DE3108677A1 · Published 1982-01-07</span></li><li><a href="?patent=US6344561B2">O- or S- substituted tetrahydronaphthalene derivatives having retinoid and/or …</a> <span class="azmeta">US6344561B2 · Published 2002-02-05</span></li><li><a href="?patent=US5808124A">O- or S-substituted dihydronaphthalene derivatives having retinoid and/or …</a> <span class="azmeta">US5808124A · Published 1998-09-15</span></li><li><a href="?patent=US4125609A">O-alkyl-O-[1,6-dihydro-1-substituted-6-thioxopyridazin(3)yl]-(thiono) (thiol) …</a> <span class="azmeta">US4125609A · Published 1978-11-14</span></li><li><a href="?patent=NZ299998A">O-demethyltramadol enantiomers, their preparation and use in medicaments</a> <span class="azmeta">NZ299998A · Published 1998-01-26</span></li></ol></details><details class="az" data-az="P"><summary><span class="azl">P</span><span class="azcount">7,895 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="P"></div><ol class="azsample"><li><a href="?patent=DE3105951A1">&quot;POWER TOOL&quot;</a> <span class="azmeta">DE3105951A1 · Published 1982-01-14</span></li><li><a href="?patent=ES508567A0">&quot;procedimiento de obtencion de un derivado de ribosa con actividad antivirasica …</a> <span class="azmeta">ES508567A0 · Published 1983-03-16</span></li><li><a href="?patent=SG181448A1">&quot;process for the dmc-catalyzed preparation of polyols&quot;</a> <span class="azmeta">SG181448A1 · Published 2012-08-30</span></li><li><a href="?patent=AU534035B2">P head</a> <span class="azmeta">AU534035B2 · Published 1983-12-22</span></li><li><a href="?patent=EP0162975B1">P-alkyl or cycloalkyl phenoxy alkanols and alkanol esters and use for the …</a> <span class="azmeta">EP0162975B1 · Published 1988-07-27</span></li></ol></details><details class="az" data-az="Q"><summary><span class="azl">Q</span><span class="azcount">145 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="Q"></div><ol class="azsample"><li><a href="?patent=US6013617A">Q2 /Q3 alkali metal silicate/inorganic compound detergent builders</a> <span class="azmeta">US6013617A · Published 2000-01-11</span></li><li><a href="?patent=CN1100318A">Qixiang tea and its preparing method</a> <span class="azmeta">CN1100318A · Published 1995-03-22</span></li><li><a href="?patent=CN117821573A">qPCR amplification reaction liquid and additive thereof suitable for LNA …</a> <span class="azmeta">CN117821573A · Published 2024-04-05</span></li><li><a href="?patent=CN101677307A">Quadrature modulation system</a> <span class="azmeta">CN101677307A · Published 2010-03-24</span></li><li><a href="?patent=CN110031582A">Quality analysis apparatus and mass analysis method</a> <span class="azmeta">CN110031582A · Published 2019-07-19</span></li></ol></details><details class="az" data-az="R"><summary><span class="azl">R</span><span class="azcount">1,674 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="R"></div><ol class="azsample"><li><a href="?patent=UA52032A">&quot;rostok&quot; paste-like product and a method of production thereof</a> <span class="azmeta">UA52032A · Published 2002-12-16</span></li><li><a href="?patent=EP3677578A1">(r)-3-((3s,4s)-3-fluoro-4-(4-hydroxyphenyl)piperidin-1-yl)-1-(4-methylbenzyl) …</a> <span class="azmeta">EP3677578A1 · Published 2020-07-08</span></li><li><a href="?patent=RU2154939C1">Rabbit growing method and apparatus</a> <span class="azmeta">RU2154939C1 · Published 2000-08-27</span></li><li><a href="?patent=US20070178531A1">Rabbit monoclonal antibodies against mouse/human Id3 proteins</a> <span class="azmeta">US20070178531A1 · Published 2007-08-02</span></li><li><a href="?patent=DE3567862D1">Racemic and optically active 7-oxo-prostacyclin derivatives, process for their …</a> <span class="azmeta">DE3567862D1 · Published 1989-03-02</span></li></ol></details><details class="az" data-az="S"><summary><span class="azl">S</span><span class="azcount">5,648 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="S"></div><ol class="azsample"><li><a href="?patent=US5252963A">&quot;Selective call receiver&quot;</a> <span class="azmeta">US5252963A · Published 1993-10-12</span></li><li><a href="?patent=RU2461218C1">&quot;sichenik fish cutlets ukrainian-style&quot; preserve preparation method</a> <span class="azmeta">RU2461218C1 · Published 2012-09-20</span></li><li><a href="?patent=RU2468638C1">&quot;sichenik fish cutlets ukrainian-style&quot; preserve preparation method</a> <span class="azmeta">RU2468638C1 · Published 2012-12-10</span></li><li><a href="?patent=RU2469576C1">&quot;sichenik fish cutlets ukrainian-style&quot; preserve preparation method</a> <span class="azmeta">RU2469576C1 · Published 2012-12-20</span></li><li><a href="?patent=SU667584A1">&quot;sokko&quot; lubricant for hot pressure working of metals</a> <span class="azmeta">SU667584A1 · Published 1979-06-15</span></li></ol></details><details class="az" data-az="T"><summary><span class="azl">T</span><span class="azcount">2,586 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="T"></div><ol class="azsample"><li><a href="?patent=TH3132A3">&quot;The finished heel pedal&quot;</a> <span class="azmeta">TH3132A3 · Published 2007-03-14</span></li><li><a href="?patent=TH3132C3">&quot;The finished heel pedal&quot;</a> <span class="azmeta">TH3132C3 · Published 2007-03-14</span></li><li><a href="?patent=AU2012200156A1">&quot;Treatment of bone disorders with skeletal anabolic drugs&quot;</a> <span class="azmeta">AU2012200156A1 · Published 2012-02-02</span></li><li><a href="?patent=US4474789A">(Trichloromethyl)pyridine compounds useful for promoting growth and/or …</a> <span class="azmeta">US4474789A · Published 1984-10-02</span></li><li><a href="?patent=JPH07207559A">&lt;title&gt;'mizuhiki'&lt;/title&gt;</a> <span class="azmeta">JPH07207559A · Published 1995-08-08</span></li></ol></details><details class="az" data-az="U"><summary><span class="azl">U</span><span class="azcount">663 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="U"></div><ol class="azsample"><li><a href="?patent=DE3100455A1">&quot;UNBURNED FIRE-RESISTANT BULK&quot;</a> <span class="azmeta">DE3100455A1 · Published 1982-01-28</span></li><li><a href="?patent=GB2111045A">&gt;Unsaturated ketones; cycloalkanone derivatives</a> <span class="azmeta">GB2111045A · Published 1983-06-29</span></li><li><a href="?patent=CN222085384U">U-shaped corrosion-resistant seamless steel pipe with sealing mechanism</a> <span class="azmeta">CN222085384U · Published 2024-11-29</span></li><li><a href="?patent=US11091447B2">UBE2K modulators and methods for their use</a> <span class="azmeta">US11091447B2 · Published 2021-08-17</span></li><li><a href="?patent=CN101716156A">Ubenimex dispersive tablet composition</a> <span class="azmeta">CN101716156A · Published 2010-06-02</span></li></ol></details><details class="az" data-az="V"><summary><span class="azl">V</span><span class="azcount">868 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="V"></div><ol class="azsample"><li><a href="?patent=DE3049170A1">&quot;verfahren zum faerben von polyester/cellulose mischgewebe&quot;</a> <span class="azmeta">DE3049170A1 · Published 1981-10-08</span></li><li><a href="?patent=EP0177490A4">(vinylaryl)alkyl polysulfide polymers.</a> <span class="azmeta">EP0177490A4 · Published 1986-09-04</span></li><li><a href="?patent=JP5272257B2">V-like domain binding molecule</a> <span class="azmeta">JP5272257B2 · Published 2013-08-28</span></li><li><a href="?patent=AU538357B2">V.t.r. tape loading and mode changing</a> <span class="azmeta">AU538357B2 · Published 1984-08-09</span></li><li><a href="?patent=EP1045698A1">Vaccin specifique de patient contre les tumeurs malignes des leucocytes elabore …</a> <span class="azmeta">EP1045698A1 · Published 2000-10-25</span></li></ol></details><details class="az" data-az="W"><summary><span class="azl">W</span><span class="azcount">784 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="W"></div><ol class="azsample"><li><a href="?patent=US5924219A">&quot;Windlass&quot; shoe</a> <span class="azmeta">US5924219A · Published 1999-07-20</span></li><li><a href="?patent=JPH0284752A">Wafer alignment device</a> <span class="azmeta">JPH0284752A · Published 1990-03-26</span></li><li><a href="?patent=CN111239152A">Wafer detection method, device and equipment</a> <span class="azmeta">CN111239152A · Published 2020-06-05</span></li><li><a href="?patent=JP6595663B2">Wafer handling end effector</a> <span class="azmeta">JP6595663B2 · Published 2019-10-23</span></li><li><a href="?patent=US20250113662A1">Wafer having micro-led structure, method for manufacturing wafer having micro- …</a> <span class="azmeta">US20250113662A1 · Published 2025-04-03</span></li></ol></details><details class="az" data-az="X"><summary><span class="azl">X</span><span class="azcount">30 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="X"></div><ol class="azsample"><li><a href="?patent=CN103784155A">X ray real-time imaging device</a> <span class="azmeta">CN103784155A · Published 2014-05-14</span></li><li><a href="?patent=GB2185479A">X,b-dilydroxy benzene-ethanamides as natural products</a> <span class="azmeta">GB2185479A · Published 1987-07-22</span></li><li><a href="?patent=CN111189419A">X-ray coating thickness gauge at redundant parts</a> <span class="azmeta">CN111189419A · Published 2020-05-22</span></li><li><a href="?patent=US9921171B2">X-ray computer-tomography apparatus</a> <span class="azmeta">US9921171B2 · Published 2018-03-20</span></li><li><a href="?patent=JP2008012229A">X-ray CT system</a> <span class="azmeta">JP2008012229A · Published 2008-01-24</span></li></ol></details><details class="az" data-az="Y"><summary><span class="azl">Y</span><span class="azcount">32 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="Y"></div><ol class="azsample"><li><a href="?patent=CN102524509A">Yacon ice cream and manufacturing method thereof</a> <span class="azmeta">CN102524509A · Published 2012-07-04</span></li><li><a href="?patent=CN103749698B">Yak milk polypeptide nutrient powder being applicable to postpartum women …</a> <span class="azmeta">CN103749698B · Published 2015-11-25</span></li><li><a href="?patent=CN103783238A">Yak milk protein sugar beneficial for children intelligence and preparation …</a> <span class="azmeta">CN103783238A · Published 2014-05-14</span></li><li><a href="?patent=KR20250112402A">Yakgwa and manufacturing method thereof</a> <span class="azmeta">KR20250112402A · Published 2025-07-24</span></li><li><a href="?patent=CN201634537U">Yard type manual-automatic integration back flushing pollution discharge water …</a> <span class="azmeta">CN201634537U · Published 2010-11-17</span></li></ol></details><details class="az" data-az="Z"><summary><span class="azl">Z</span><span class="azcount">96 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="Z"></div><ol class="azsample"><li><a href="?patent=UA73686U">&quot;zakusochni&quot; (snack) bars with dietetic additives and a spinach-cheese-almond …</a> <span class="azmeta">UA73686U · Published 2012-10-10</span></li><li><a href="?patent=US6524294B1">Z-fold diaper fastener</a> <span class="azmeta">US6524294B1 · Published 2003-02-25</span></li><li><a href="?patent=DE4001417A1">ZAEHELASTIFIED TWO-COMPONENT EPOXY RESIN ADHESIVE</a> <span class="azmeta">DE4001417A1 · Published 1991-07-25</span></li><li><a href="?patent=CN1223071A">Zaofengning high-efficiency biocide and nutrient for jujube tree</a> <span class="azmeta">CN1223071A · Published 1999-07-21</span></li><li><a href="?patent=CZ20013476A3">Zařízení pro vytápění/větrání/nebo klimatizaci prostoru pro cestující ve …</a> <span class="azmeta">CZ20013476A3 · Published 2002-03-13</span></li></ol></details><details class="az" data-az="#"><summary><span class="azl">#</span><span class="azcount">1,912 patents</span><span class="azhint">tap to browse</span></summary><div class="azlist" data-azlist="#"></div><ol class="azsample"><li><a href="?patent=AU4462979A">&quot;4-(5-fluoromethyl-2-pyridloxy) phenoxyvaleric acids</a> <span class="azmeta">AU4462979A · Published 1979-09-13</span></li><li><a href="?patent=AU518848B2">&quot;4-(5-fluoromethyl-2-pyridloxy) phenoxyvaleric acids</a> <span class="azmeta">AU518848B2 · Published 1981-10-22</span></li><li><a href="?patent=EP3434674B1">((4-(2-oxoimidazolidine-1-yl)pyrimidin-2-yl)amine derivatives as mutant idh …</a> <span class="azmeta">EP3434674B1 · Published 2021-02-24</span></li><li><a href="?patent=DE2610985A1">(1)-Aminopurinyl-(1)-deoxyribofuranuronic acid medicaments - with circulatory, …</a> <span class="azmeta">DE2610985A1 · Published 1977-09-29</span></li><li><a href="?patent=IE52514B1">(1-benzyl-1h-indazol-3-yl)oxy)acetic acid salt with lysine</a> <span class="azmeta">IE52514B1 · Published 1987-11-25</span></li></ol></details></div></section>
 <section class="infosection" id="static-cats" aria-label="Browse patent categories (static index)">
   <h2>Browse by category</h2>
   <div class="infocard"><table class="statictable"><tbody><tr><td><a href="#secbtns"><b>A</b> &mdash; Human necessities</a></td><td class="num">59,350 records</td></tr><tr><td><a href="#secbtns"><b>B</b> &mdash; Performing operations; transporting</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>C</b> &mdash; Chemistry; metallurgy</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>D</b> &mdash; Textiles; paper</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>E</b> &mdash; Fixed constructions</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>F</b> &mdash; Mechanical engineering</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>G</b> &mdash; Physics</a></td><td class="num">0 records</td></tr><tr><td><a href="#secbtns"><b>H</b> &mdash; Electricity</a></td><td class="num">1,474 records</td></tr></tbody></table></div>
@@ -1366,6 +1425,82 @@ function finderRun(){
       }
     } else { apply(); }
   } catch (e) { apply(); }
+
+  /* ================= A-Z ARCHIVE (network order 2026-10-04) =================
+     Full catalog as collapsible letter lists. Per-letter DATA indices are
+     built once from the search index (title-sorted, letter in r[14]); each
+     opened letter renders 40 rows at a time with a "show more" button, so the
+     page stays fast. Static top-5 samples stamped at build are swapped out
+     for the live list on first open. ES5-safe. */
+  var AZ_BUILT = {}, AZ_SHOWN = {};
+  function azIndices(L) {
+    if (AZ_BUILT[L]) return AZ_BUILT[L];
+    var idxs = [], i;
+    if (DATA) for (i = 0; i < DATA.length; i++) if (DATA[i][14] === L) idxs.push(i);
+    AZ_BUILT[L] = idxs; AZ_SHOWN[L] = 0;
+    return idxs;
+  }
+  function azRowHTML(idx) {
+    var r = DATA[idx];
+    var perma = "?patent=" + encodeURIComponent(r[0]);
+    var m = esc(r[0]) + (r[6] ? " · Published " + esc(r[6]) : "") +
+            (r[4] ? " · " + esc(r[4]) : "");
+    return '<div class="azrow"><a class="azt" href="' + perma + '">' +
+      esc(r[1] || "(record title missing — under review)") + "</a>" +
+      '<div class="azmeta">' + m + "</div></div>";
+  }
+  function azRender(L, reset) {
+    var det = document.querySelector('details.az[data-az="' + L + '"]');
+    if (!det) return;
+    var box = det.querySelector(".azlist");
+    if (!box) return;
+    var idxs = azIndices(L);
+    if (reset) { AZ_SHOWN[L] = 0; box.innerHTML = ""; }
+    var sample = det.querySelector(".azsample");
+    if (sample && sample.parentNode) sample.parentNode.removeChild(sample);
+    var from = AZ_SHOWN[L], to = Math.min(idxs.length, from + 40), h = "", i;
+    for (i = from; i < to; i++) h += azRowHTML(idxs[i]);
+    if (h) box.insertAdjacentHTML("beforeend", h);
+    AZ_SHOWN[L] = to;
+    var old = det.querySelector(".azmore");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    if (to < idxs.length) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "azmore"; b.setAttribute("data-azmore", L);
+      b.textContent = "Show 40 more (" + (idxs.length - to).toLocaleString() + " left)";
+      det.appendChild(b);
+    }
+  }
+  var archEl = document.getElementById("archive");
+  if (archEl) {
+    archEl.addEventListener("toggle", function (e) {
+      var d = e.target;
+      if (!d || !d.classList || !d.classList.contains("az")) return;
+      var L = d.getAttribute("data-az");
+      if (d.open && !AZ_BUILT[L]) azRender(L, true);
+    }, true);
+    archEl.addEventListener("click", function (e) {
+      var b = e.target && e.target.closest ? e.target.closest("[data-azmore]") : null;
+      if (b) azRender(b.getAttribute("data-azmore"), false);
+    });
+  }
+  /* ?letter=X deep link: opens that archive letter and scrolls to it.
+     A ?patent= link wins when both are present. */
+  try {
+    var qs = new URLSearchParams(window.location.search);
+    var lq = qs.get("letter"), hasPat = qs.get("patent");
+    if (lq && !hasPat) {
+      var LL = String(lq).trim().toUpperCase();
+      if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ#".indexOf(LL) >= 0) {
+        var ldet = document.querySelector('details.az[data-az="' + LL + '"]');
+        if (ldet) {
+          ldet.setAttribute("open", "");
+          azRender(LL, true);
+          setTimeout(function () { ldet.scrollIntoView(true); }, 400);
+        }
+      }
+    }
+  } catch (e2) {}
 }
 
 /* ---- moved to top-level: helpers used by global recviewHTML ---- */
@@ -1517,12 +1652,15 @@ function googleTranslateElementInit() {
       "google_translate_element");
   } catch (e) {}
 }
-/* FIX-03 (2026-10-02): collapse stat tickers on small screens so the search bar stays instantly reachable */
+/* FIX-03 (2026-10-02): collapse stat tickers on small screens so the search bar stays instantly reachable.
+   NETWORK ORDER 2026-10-04: the BROWSE BY GROUP pills collapse too — same pattern. */
 (function () {
   try {
     if (window.matchMedia && window.matchMedia("(max-width: 767px)").matches) {
       var d = document.querySelector("details.stattoggle");
       if (d) d.removeAttribute("open");
+      var g = document.querySelector("details.sectoggle");
+      if (g) g.removeAttribute("open");
     }
   } catch (e) {}
 })();
@@ -1553,7 +1691,7 @@ var recScrolled=false;
 /* (a) scroll position: throttled save, restore after content settles */
 var st=null;
 window.addEventListener("scroll",function(){if(st)return;st=setTimeout(function(){st=null;try{localStorage.setItem(sk("y"),String(window.scrollY||window.pageYOffset||0));}catch(e){}},300);},{passive:true});
-function hasDeepLink(){try{return !!new URLSearchParams(location.search).get("patent");}catch(e){return false;}}
+function hasDeepLink(){try{var q=new URLSearchParams(location.search);return !!q.get("patent")||!!q.get("letter");}catch(e){return false;}}
 function doScroll(){if(recScrolled||hasDeepLink())return;try{var y=parseInt(localStorage.getItem(sk("y"))||"0",10);if(y>0)window.scrollTo(0,y);}catch(e){}}
 /* (b) tab state: save search mode + section filter on click; restore once UI is ready */
 document.addEventListener("click",function(e){
@@ -1571,7 +1709,13 @@ function restoreTabs(){
     var s=localStorage.getItem(sk("sec"));
     if(s&&typeof state!=="undefined"&&state.section!==s){
       var b=document.querySelector('.secbtn[data-s="'+s+'"]');
-      if(b)b.click();
+      if(b){
+        /* the groups pills start collapsed on phones — reopen so the
+           restored filter is visible */
+        var gt=document.querySelector("details.sectoggle");
+        if(gt)gt.setAttribute("open","");
+        b.click();
+      }
     }
   }catch(e){}
 }
@@ -1789,6 +1933,11 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
       "in order and fills sections in automatically. Zero never means “no patents exist”.</p>" +
       "<p>After picking a section, the <b>class pills</b> (e.g. A01 Agriculture) narrow to one technology area. " +
       "The <b>A–Z strip</b> jumps to titles by first letter; greyed letters have no titles.</p>");
+    h += det("Browse the A–Z archive",
+      "<p>Below the search results, the <b>A–Z archive</b> lists every patent by the first letter of its title " +
+      "&mdash; open a letter and browse. Each letter shows its record count, and records load as you open them so the " +
+      "page stays fast. The BROWSE BY GROUP pills collapse on phones to keep the page tidy.</p>" +
+      "<p>A link like <b>?letter=M</b> opens that letter directly. Every title links to its full record.</p>");
     h += det("Patent record cards",
       "<p>Each card shows the <b>publication number</b> (the canonical record ID) and the catalog's permanent <b>JAH-PAT</b> ID, " +
       "title, owner, inventor, dates, field, and a status pill: <b>Live</b> (granted), <b>Pending</b> (published application), " +

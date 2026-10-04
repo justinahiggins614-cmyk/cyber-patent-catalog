@@ -94,7 +94,78 @@ def static_sections(enriched, meta):
     return cats, recent
 
 
-def build_html(meta, harv=None, enriched=None, last_ts=None):
+def letter_of(title):
+    """First A-Z letter of a title for the A-Z archive. Same rule as the
+    search-index letter column the client uses. Kept local: build_catalog_page
+    has its own copy; build_template must not import it (circular)."""
+    for ch in (title or "").strip().upper():
+        if "A" <= ch <= "Z":
+            return ch
+        if ch.isalpha() or ch.isdigit():
+            return "#"
+    return "#"
+
+
+def archive_section(enriched):
+    """A-Z ARCHIVE (network order 2026-10-04): the full catalog as 27
+    collapsible <details> letter lists. Counts + top-5 static samples are
+    stamped at build from the flushed data (bot/no-JS readable); the browser
+    lazy-renders the rest of each letter from the search index on first open,
+    so the shell stays small."""
+    enriched = enriched or []
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#"
+    groups = {L: [] for L in letters}
+    for e in enriched:
+        groups[letter_of(e.get("title") or "")].append(e)
+    total = sum(len(v) for v in groups.values())
+    if total != len(enriched):
+        raise SystemExit("ARCHIVE GATE: letter grouping covered %d of %d records"
+                         % (total, len(enriched)))
+    dets = []
+    for L in letters:
+        g = sorted(groups[L], key=lambda e: (e.get("title") or "").lower())
+        n = len(g)
+        label = "digits & symbols" if L == "#" else "titles starting with " + L
+        items = []
+        for e in g[:5]:
+            pub = e.get("pub") or ""
+            title = (e.get("title") or "(record title missing — under review)").strip()
+            bits = [pub]
+            if e.get("publication_date"):
+                bits.append("Published " + e["publication_date"])
+            items.append(
+                '<li><a href="?patent=%s">%s</a> <span class="azmeta">%s</span></li>' % (
+                    urllib.parse.quote(pub, safe=""),
+                    esc_html(title[:120]),
+                    esc_html(" · ".join(bits))))
+        sample = ('<ol class="azsample">%s</ol>' % "".join(items)) if items else ""
+        dets.append(
+            '<details class="az" data-az="%s"><summary><span class="azl">%s</span>'
+            '<span class="azcount">%s patent%s</span>'
+            '<span class="azhint">tap to browse</span></summary>'
+            '<div class="azlist" data-azlist="%s"></div>%s</details>' % (
+                L, esc_html(L), f"{n:,}", "" if n == 1 else "s", L, sample))
+    return ('<section class="infosection" id="archive" aria-label="Browse the full patent archive A to Z">'
+            '<h2>Browse the patent archive A&ndash;Z</h2>'
+            '<div class="infocard"><p class="azintro">Every patent in the catalog, filed by the first '
+            'letter of its title &mdash; open a letter and browse the records. They load as you open '
+            'them, so this page stays fast on any phone. Every title links to its full record.</p>'
+            '%s</div></section>' % "".join(dets))
+
+
+def cataloglink_html(page, count):
+    """Prominent catalog.html link. index.html (the home entry) links out to
+    catalog.html; catalog.html shows the matching 'you are here' note with a
+    jump link into its own A-Z archive instead of a self-link."""
+    if page == "catalog":
+        return ('<span class="catlink-here">You are browsing the full catalog &mdash; '
+                '<a href="#archive">jump to the A&ndash;Z archive &#8595;</a></span>')
+    return ('<a class="catlink" href="catalog.html">&#128214; Browse the full patent archive A&ndash;Z</a>'
+            '<span class="catlink-sub">%s patents &middot; by title letter &middot; no search needed</span>'
+            % f"{count:,}")
+
+
+def build_html(meta, harv=None, enriched=None, last_ts=None, page="index"):
     count = meta["record_count"]
     today = meta["last_updated"]
     sections = meta["sections"]
@@ -507,6 +578,64 @@ html[data-theme="dark"] img,html[data-theme="dark"] video,html[data-theme="dark"
   border-radius: 8px; border: none; background: #16337a; color: #fff; font-weight: 700;
   font-size: .95em; cursor: pointer; }
 </style>
+<style>
+/* A-Z ARCHIVE + collapsible group pills (network order 2026-10-04).
+   Additive only: desktop renders exactly as before; phones get tidy
+   collapsible sections and lazy-loading letter lists. */
+.catlinkrow { margin-top: 14px; text-align: center; }
+.catlink { display: inline-block; padding: 11px 24px; border-radius: 999px;
+  background: #c9a227; color: #0d2149; font-weight: 800; font-size: .95em;
+  text-decoration: none; border: 2px solid #e8c766; }
+.catlink:hover { background: #e8c766; }
+.catlink-sub { display: block; margin-top: 8px; font-size: .78em; color: #d9b84a; }
+.catlink-here { display: inline-block; font-size: .85em; color: #e8c766; font-weight: 700;
+  letter-spacing: .04em; }
+.catlink-here a { color: #e8c766; }
+/* BROWSE BY GROUP: desktop renders exactly as before (summary hidden, always
+   open); on phones it becomes a collapsible bar, collapsed by default. */
+details.sectoggle { border: 0; padding: 0; margin: 16px 0 4px; }
+details.sectoggle > .sectoggle-s { display: none; }
+@media (max-width: 767px) {
+  details.sectoggle > .sectoggle-s { display: block; cursor: pointer; font-size: .85em;
+    letter-spacing: .08em; color: #33507e; font-weight: 700; text-align: center;
+    padding: 12px 4px; border: 1px dashed #9fb2c8; border-radius: 8px;
+    margin: 0 0 8px; min-height: 44px; background: #fff; }
+}
+/* The A-Z archive: clean letter lists, product-forward. */
+#archive .azintro { margin: 0 0 6px; color: #33415c; font-size: .9em; line-height: 1.6; }
+details.az { border: 1px solid #d3dce6; border-radius: 8px; margin: 8px 0; background: #fbfdff; }
+details.az > summary { padding: 10px 14px; cursor: pointer; font-weight: 700; color: #16337a;
+  font-size: .95em; min-height: 44px; display: flex; align-items: center; gap: 10px;
+  list-style: none; }
+details.az > summary::-webkit-details-marker { display: none; }
+details.az > summary .azl { display: inline-block; min-width: 36px; text-align: center;
+  background: #16337a; color: #fff; border-radius: 8px; padding: 7px 0; font-size: 1.05em; }
+details.az > summary .azcount { color: #5b6b7f; font-weight: 400; font-size: .85em; }
+details.az > summary .azhint { margin-left: auto; font-size: .75em; font-weight: 600;
+  color: #8a97a8; letter-spacing: .06em; }
+details.az[open] > summary .azhint { display: none; }
+.azlist { padding: 0 14px 4px; }
+.azrow { padding: 10px 2px; border-top: 1px solid #e3eaf3; }
+.azrow:first-child { border-top: 0; }
+.azrow .azt { font-weight: 700; color: #1d4ed8; text-decoration: none; font-size: .95em;
+  line-height: 1.4; }
+.azrow .azt:hover { text-decoration: underline; }
+.azrow .azmeta { font-size: .8em; color: #5b6b7f; margin-top: 3px; line-height: 1.5; }
+.azsample { margin: 2px 14px 12px 36px; padding: 0; font-size: .88em; color: #33415c; }
+.azsample li { margin: 7px 0; line-height: 1.5; }
+.azsample a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
+.azsample a:hover { text-decoration: underline; }
+.azsample .azmeta { color: #5b6b7f; font-size: .85em; }
+.azmore { display: block; margin: 10px auto 14px; padding: 11px 24px; border-radius: 8px;
+  border: 1px solid #16337a; background: #fff; color: #16337a; font-weight: 700;
+  cursor: pointer; font-size: .9em; }
+.azmore:hover { background: #e8eefb; }
+@media (max-width: 767px) {
+  details.az > summary { padding: 12px 10px; }
+  .azrow .azt { font-size: .92em; }
+  .catlink { width: calc(100% - 32px); }
+}
+</style>
 </head>
 <body>
 <button id="jah-theme-toggle" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">&#9681;</button>
@@ -563,6 +692,7 @@ paint();})();
   <div class="langrow">&#127760; Language: <span id="google_translate_element"></span></div>
   <div class="harvestline">__HARVEST_LINE__</div>
   __PROGRESS__
+  <div class="catlinkrow">__CATALOGLINK__</div>
 </header>
 <div class="searchbar" id="searchbar">
   <div class="searchrow">
@@ -581,10 +711,9 @@ paint();})();
   </div>
 </div>
 <div class="searchwrap">
-  <div class="groups">
-    <div class="gtitle">BROWSE BY GROUP</div>
+  <details class="sectoggle" open><summary class="sectoggle-s">BROWSE BY GROUP</summary>
     <div class="secbtns" id="secbtns">__SECTIONS__</div>
-  </div>
+  </details>
   <p class="coveragenote">__COVERAGE_NOTE__</p>
   <div class="filters" id="filters"></div>
   <div class="sortrow"><label for="sort">Sort:</label>
@@ -611,6 +740,7 @@ it is an independent index of public patent records.</p>
 <h2 class="sr-only" id="resultshead">Patent records</h2>
 <div id="results"><p class="nores" id="bootmsg"><h3>Loading the catalog index&hellip;</h3></p></div>
 <button id="more" type="button" style="display:none">Show more</button>
+__ARCHIVE__
 <section class="infosection" id="static-cats" aria-label="Browse patent categories (static index)">
   <h2>Browse by category</h2>
   <div class="infocard">__STATIC_CATS__</div>
@@ -1535,6 +1665,82 @@ function finderRun(){
       }
     } else { apply(); }
   } catch (e) { apply(); }
+
+  /* ================= A-Z ARCHIVE (network order 2026-10-04) =================
+     Full catalog as collapsible letter lists. Per-letter DATA indices are
+     built once from the search index (title-sorted, letter in r[14]); each
+     opened letter renders 40 rows at a time with a "show more" button, so the
+     page stays fast. Static top-5 samples stamped at build are swapped out
+     for the live list on first open. ES5-safe. */
+  var AZ_BUILT = {}, AZ_SHOWN = {};
+  function azIndices(L) {
+    if (AZ_BUILT[L]) return AZ_BUILT[L];
+    var idxs = [], i;
+    if (DATA) for (i = 0; i < DATA.length; i++) if (DATA[i][14] === L) idxs.push(i);
+    AZ_BUILT[L] = idxs; AZ_SHOWN[L] = 0;
+    return idxs;
+  }
+  function azRowHTML(idx) {
+    var r = DATA[idx];
+    var perma = "?patent=" + encodeURIComponent(r[0]);
+    var m = esc(r[0]) + (r[6] ? " \u00b7 Published " + esc(r[6]) : "") +
+            (r[4] ? " \u00b7 " + esc(r[4]) : "");
+    return '<div class="azrow"><a class="azt" href="' + perma + '">' +
+      esc(r[1] || "(record title missing \u2014 under review)") + "</a>" +
+      '<div class="azmeta">' + m + "</div></div>";
+  }
+  function azRender(L, reset) {
+    var det = document.querySelector('details.az[data-az="' + L + '"]');
+    if (!det) return;
+    var box = det.querySelector(".azlist");
+    if (!box) return;
+    var idxs = azIndices(L);
+    if (reset) { AZ_SHOWN[L] = 0; box.innerHTML = ""; }
+    var sample = det.querySelector(".azsample");
+    if (sample && sample.parentNode) sample.parentNode.removeChild(sample);
+    var from = AZ_SHOWN[L], to = Math.min(idxs.length, from + 40), h = "", i;
+    for (i = from; i < to; i++) h += azRowHTML(idxs[i]);
+    if (h) box.insertAdjacentHTML("beforeend", h);
+    AZ_SHOWN[L] = to;
+    var old = det.querySelector(".azmore");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    if (to < idxs.length) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "azmore"; b.setAttribute("data-azmore", L);
+      b.textContent = "Show 40 more (" + (idxs.length - to).toLocaleString() + " left)";
+      det.appendChild(b);
+    }
+  }
+  var archEl = document.getElementById("archive");
+  if (archEl) {
+    archEl.addEventListener("toggle", function (e) {
+      var d = e.target;
+      if (!d || !d.classList || !d.classList.contains("az")) return;
+      var L = d.getAttribute("data-az");
+      if (d.open && !AZ_BUILT[L]) azRender(L, true);
+    }, true);
+    archEl.addEventListener("click", function (e) {
+      var b = e.target && e.target.closest ? e.target.closest("[data-azmore]") : null;
+      if (b) azRender(b.getAttribute("data-azmore"), false);
+    });
+  }
+  /* ?letter=X deep link: opens that archive letter and scrolls to it.
+     A ?patent= link wins when both are present. */
+  try {
+    var qs = new URLSearchParams(window.location.search);
+    var lq = qs.get("letter"), hasPat = qs.get("patent");
+    if (lq && !hasPat) {
+      var LL = String(lq).trim().toUpperCase();
+      if ("ABCDEFGHIJKLMNOPQRSTUVWXYZ#".indexOf(LL) >= 0) {
+        var ldet = document.querySelector('details.az[data-az="' + LL + '"]');
+        if (ldet) {
+          ldet.setAttribute("open", "");
+          azRender(LL, true);
+          setTimeout(function () { ldet.scrollIntoView(true); }, 400);
+        }
+      }
+    }
+  } catch (e2) {}
 }
 
 /* ---- moved to top-level: helpers used by global recviewHTML ---- */
@@ -1686,12 +1892,15 @@ function googleTranslateElementInit() {
       "google_translate_element");
   } catch (e) {}
 }
-/* FIX-03 (2026-10-02): collapse stat tickers on small screens so the search bar stays instantly reachable */
+/* FIX-03 (2026-10-02): collapse stat tickers on small screens so the search bar stays instantly reachable.
+   NETWORK ORDER 2026-10-04: the BROWSE BY GROUP pills collapse too — same pattern. */
 (function () {
   try {
     if (window.matchMedia && window.matchMedia("(max-width: 767px)").matches) {
       var d = document.querySelector("details.stattoggle");
       if (d) d.removeAttribute("open");
+      var g = document.querySelector("details.sectoggle");
+      if (g) g.removeAttribute("open");
     }
   } catch (e) {}
 })();
@@ -1722,7 +1931,7 @@ var recScrolled=false;
 /* (a) scroll position: throttled save, restore after content settles */
 var st=null;
 window.addEventListener("scroll",function(){if(st)return;st=setTimeout(function(){st=null;try{localStorage.setItem(sk("y"),String(window.scrollY||window.pageYOffset||0));}catch(e){}},300);},{passive:true});
-function hasDeepLink(){try{return !!new URLSearchParams(location.search).get("patent");}catch(e){return false;}}
+function hasDeepLink(){try{var q=new URLSearchParams(location.search);return !!q.get("patent")||!!q.get("letter");}catch(e){return false;}}
 function doScroll(){if(recScrolled||hasDeepLink())return;try{var y=parseInt(localStorage.getItem(sk("y"))||"0",10);if(y>0)window.scrollTo(0,y);}catch(e){}}
 /* (b) tab state: save search mode + section filter on click; restore once UI is ready */
 document.addEventListener("click",function(e){
@@ -1740,7 +1949,13 @@ function restoreTabs(){
     var s=localStorage.getItem(sk("sec"));
     if(s&&typeof state!=="undefined"&&state.section!==s){
       var b=document.querySelector('.secbtn[data-s="'+s+'"]');
-      if(b)b.click();
+      if(b){
+        /* the groups pills start collapsed on phones — reopen so the
+           restored filter is visible */
+        var gt=document.querySelector("details.sectoggle");
+        if(gt)gt.setAttribute("open","");
+        b.click();
+      }
     }
   }catch(e){}
 }
@@ -1958,6 +2173,11 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
       "in order and fills sections in automatically. Zero never means \u201cno patents exist\u201d.</p>" +
       "<p>After picking a section, the <b>class pills</b> (e.g. A01 Agriculture) narrow to one technology area. " +
       "The <b>A\u2013Z strip</b> jumps to titles by first letter; greyed letters have no titles.</p>");
+    h += det("Browse the A\u2013Z archive",
+      "<p>Below the search results, the <b>A\u2013Z archive</b> lists every patent by the first letter of its title " +
+      "&mdash; open a letter and browse. Each letter shows its record count, and records load as you open them so the " +
+      "page stays fast. The BROWSE BY GROUP pills collapse on phones to keep the page tidy.</p>" +
+      "<p>A link like <b>?letter=M</b> opens that letter directly. Every title links to its full record.</p>");
     h += det("Patent record cards",
       "<p>Each card shows the <b>publication number</b> (the canonical record ID) and the catalog's permanent <b>JAH-PAT</b> ID, " +
       "title, owner, inventor, dates, field, and a status pill: <b>Live</b> (granted), <b>Pending</b> (published application), " +
@@ -2054,5 +2274,7 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
                 .replace("__STATIC_RECENT__", static_recent)
                 .replace("__CLASSES__", class_json)
                 .replace("__SECTIONS_JSON__", section_names)
-                .replace("__META__", meta_json))
+                .replace("__META__", meta_json)
+                .replace("__CATALOGLINK__", cataloglink_html(page, count))
+                .replace("__ARCHIVE__", archive_section(enriched or [])))
 
