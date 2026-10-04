@@ -698,7 +698,7 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 /* UX-2026-10-03: opt-in dark mode via data-theme; default look unchanged */
 html[data-theme="dark"]{filter:invert(1) hue-rotate(180deg)}
 html[data-theme="dark"] img,html[data-theme="dark"] video,html[data-theme="dark"] canvas,html[data-theme="dark"] svg{filter:invert(1) hue-rotate(180deg)}
-#jah-theme-toggle{position:fixed;right:14px;bottom:14px;z-index:99999;width:40px;height:40px;border-radius:50%;border:1px solid #c9a227;background:#16337a;color:#e8c766;font-size:20px;line-height:1;cursor:pointer;opacity:.7;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#jah-theme-toggle{position:fixed;right:14px;bottom:72px;z-index:99999;width:40px;height:40px;border-radius:50%;border:1px solid #c9a227;background:#16337a;color:#e8c766;font-size:20px;line-height:1;cursor:pointer;opacity:.7;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 #jah-theme-toggle:hover{opacity:1}
 </style>
 <style>
@@ -957,7 +957,7 @@ __ARCHIVE__
 <a href="https://justinahiggins614-cmyk.github.io/jah-calculator/" target="_blank" rel="noopener">2 Signature Universal Paradox Immune Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/" target="_blank" rel="noopener">3 The Signature Dictionary</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-wiki/" target="_blank" rel="noopener">4 JAH Wiki</a>
-<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/" target="_blank" rel="noopener">5 JAH-N Wiki</a>
+<a href="https://justinahiggins614-cmyk.github.io/jah-n-wiki-leaks/" target="_blank" rel="noopener">5 JAH-N Wiki Leaks</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-llama/" target="_blank" rel="noopener">6 Signature Llama: The Fully Cyber Utilizable AI</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-ai-models/" target="_blank" rel="noopener">7 The Signature AI Phone Book</a>
 <span class="jahnet-cur">8 Globally Rejustered Patent Catalog — YOU ARE HERE</span>
