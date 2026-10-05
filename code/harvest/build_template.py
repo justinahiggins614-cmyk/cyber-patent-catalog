@@ -952,7 +952,7 @@ __ARCHIVE__
     </dl>
   </div>
 </section>
-<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 8 OF 31</span>
+<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 8 OF 35</span>
 <a href="https://justinahiggins614-cmyk.github.io/signature-math/" target="_blank" rel="noopener">1 Signature Math</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-calculator/" target="_blank" rel="noopener">2 Signature Universal Paradox Immune Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/" target="_blank" rel="noopener">3 The Signature Dictionary</a>
@@ -984,6 +984,10 @@ __ARCHIVE__
 <a href="https://justinahiggins614-cmyk.github.io/signature-flight-school/" target="_blank" rel="noopener">29 The Signature Flight School</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-game-store/" target="_blank" rel="noopener">30 The Signature Game Store</a>
 <a href="https://justinahiggins614-cmyk.github.io/signature-website-creator/" target="_blank" rel="noopener">31 The Signature Website Creator</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-antivirus/" target="_blank" rel="noopener">32 The Signature Antivirus</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-os-updater/" target="_blank" rel="noopener">33 The Signature OS Updater</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-space-mapping/" target="_blank" rel="noopener">34 Signature Space Mapping</a>
+<a href="https://justinahiggins614-cmyk.github.io/signature-cookbook/" target="_blank" rel="noopener">35 The Signature Cookbook</a>
 </div></nav>
 <!-- JAH STANDARD SIGNATURE STAMP -->
 <div style="text-align:center;padding:14px 12px 4px"><img src="assets/signature-stamp.jpg" alt="The official Signature stamp" style="width:120px;max-width:32%;height:auto"></div>
