@@ -2461,6 +2461,8 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
 })();
 </script>
 <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script src="js/signin.js"></script>
+<script src="js/godmode.js"></script>
 </body>
 </html>
 """
