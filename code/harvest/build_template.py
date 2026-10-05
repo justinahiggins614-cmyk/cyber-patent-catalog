@@ -66,8 +66,13 @@ SECTION_NAMES = {
 
 def static_sections(enriched, meta):
     """FIX-03 (2026-10-02): pre-rendered static HTML for bot ingestion —
-    category table (8 CPC sections) + recent-filings table (top 40 by
-    publication date), all with real ?patent= deep links."""
+    category table (8 CPC sections), all with real ?patent= deep links.
+    2026-10-05 Manon rule: the recent-filings table (top 40 by publication
+    date) moved OFF the front door to catalog.html (the 1 Million Archive tab),
+    as a COLLAPSED + LAZY group — <details> collapsed by default, rows
+    injected from a JSON blob on first toggle-open, only the opened group's
+    records in the DOM; a <noscript> static table keeps the no-JS bot snapshot.
+    ?patent= deep links work on catalog.html too."""
     sections = meta.get("sections", {})
     rows = []
     for s in "ABCDEFGH":
@@ -80,18 +85,50 @@ def static_sections(enriched, meta):
 
     dated = [e for e in enriched if e.get("publication_date")]
     dated.sort(key=lambda e: e["publication_date"], reverse=True)
-    rrows = []
+    recs = []
     for e in dated[:40]:
         pub = e["pub"]
         url = "?patent=" + urllib.parse.quote(pub, safe="")
-        rrows.append(
-            '<tr><td><a href="%s">%s</a></td><td>%s</td><td class="num">%s</td><td>%s</td></tr>'
-            % (url, esc_html(pub), esc_html(e["title"] or "(title missing)"),
-               esc_html(e["publication_date"] or ""), esc_html(e["assignee"] or "")))
-    recent = ('<table class="statictable">'
-              '<thead><tr><th>Number</th><th>Title</th><th>Published</th><th>Owner</th></tr></thead>'
-              '<tbody>' + "".join(rrows) + "</tbody></table>")
-    return cats, recent
+        recs.append([pub, e["title"] or "(title missing)",
+                     e["publication_date"] or "", e["assignee"] or "", url])
+    return cats, recent_section_html(recs)
+
+
+def recent_section_html(recs):
+    """Collapsed lazy 'Recent filings' section — lives on catalog.html only."""
+    blob = json.dumps(recs, ensure_ascii=False, separators=(",", ":"))
+    nos = ['<noscript><table class="statictable"><thead><tr><th>Number</th><th>Title</th>'
+           '<th>Published</th><th>Owner</th></tr></thead><tbody>']
+    for pub, title, date, owner, url in recs:
+        nos.append('<tr><td><a href="%s">%s</a></td><td>%s</td><td class="num">%s</td><td>%s</td></tr>'
+                   % (esc_html(url), esc_html(pub), esc_html(title),
+                      esc_html(date), esc_html(owner)))
+    nos.append('</tbody></table></noscript>')
+    lazy = ('<script>(function(){function esc(s){return String(s).replace(/[&<>"\']/g,'
+            'function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",\'"\':"&quot;","\'":"&#39;"}[c]})}'
+            'function render(d){var b=d.querySelector(".catbody");if(!b||b.dataset.done)return;'
+            'b.dataset.done="1";var el=document.getElementById("catdata-recent");var rows=[];'
+            'try{rows=JSON.parse(el.textContent)}catch(e){}'
+            'var h=\'<table class="statictable"><thead><tr><th>Number</th><th>Title</th>'
+            '<th>Published</th><th>Owner</th></tr></thead><tbody>\';'
+            'for(var i=0;i<rows.length;i++){var r=rows[i];'
+            'h+=\'<tr><td><a href="\'+esc(r[4])+\'">\'+esc(r[0])+\'</a></td><td>\'+esc(r[1])+'
+            '\'</td><td class="num">\'+esc(r[2])+\'</td><td>\'+esc(r[3])+\'</td></tr>\'}'
+            'b.innerHTML=h+"</tbody></table>"}'
+            'document.querySelectorAll("details.catgroup").forEach(function(d){'
+            'd.addEventListener("toggle",function(){if(d.open)render(d)})})})();</script>')
+    return (
+        '<section class="infosection" id="recent" aria-label="Recent patent filings (static index)">'
+        '<h2>Recent filings</h2><div class="infocard">'
+        '<script type="application/json" id="catdata-recent">%s</script>'
+        '<details class="catgroup" id="cat-recent"><summary>&#128240; Recent filings '
+        '<span class="seqlab">(%d records &mdash; tap to open)</span></summary>'
+        '<div class="catbody"><p class="seqlab">Opening&hellip;</p></div></details>'
+        '%s'
+        '<p class="seqlab">Showing the 40 most recently published records. Full machine-readable feed: '
+        '<a href="data/patents.csv">data/patents.csv</a>.</p>'
+        '%s'
+        '</div></section>' % (blob, len(recs), "".join(nos), lazy))
 
 
 def letter_of(title):
@@ -398,8 +435,10 @@ def build_html(meta, harv=None, enriched=None, last_ts=None, page="index"):
         "is a real harvested public record."
     )
 
-    # FIX-03 (2026-10-02): static category + recent-filing tables for bots.
-    static_cats, static_recent = static_sections(enriched or [], meta)
+    # FIX-03 (2026-10-02): static category table for bots (stays on index.html).
+    # 2026-10-05 Manon rule: the recent-filings section moved to catalog.html
+    # only — collapsed lazy group, never on the front door.
+    static_cats, recent_section = static_sections(enriched or [], meta)
 
     html = """<!DOCTYPE html>
 <html lang="en">
@@ -695,6 +734,13 @@ a.fcard .fgo{margin-top:8px;font-weight:700;color:#16337a;font-size:.88em}
 .statictable td.num { white-space: nowrap; color: #5b6b7f; }
 .statictable a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
 .statictable a:hover { text-decoration: underline; }
+/* collapsed lazy catalog groups (2026-10-05 Manon rule): big record tables
+   live on archive tab pages only, collapsed by default, lazy-rendered */
+.catgroup { margin: 6px 0; }
+.catgroup > summary { cursor: pointer; font-weight: 700; padding: 8px 10px;
+  border: 1px solid #b9c6d6; border-radius: 8px; background: #f4f7fb; }
+.catgroup .catbody { padding: 6px 2px; }
+.seqlab { font-weight: 400; font-size: .82em; color: #5b6b7f; }
 /* UX-2026-10-03: opt-in dark mode via data-theme; default look unchanged */
 html[data-theme="dark"]{filter:invert(1) hue-rotate(180deg)}
 html[data-theme="dark"] img,html[data-theme="dark"] video,html[data-theme="dark"] canvas,html[data-theme="dark"] svg{filter:invert(1) hue-rotate(180deg)}
@@ -885,10 +931,7 @@ __ARCHIVE__
   <h2>Browse by category</h2>
   <div class="infocard">__STATIC_CATS__</div>
 </section>
-<section class="infosection" id="recent" aria-label="Recent patent filings (static index)">
-  <h2>Recent filings</h2>
-  <div class="infocard">__STATIC_RECENT__</div>
-</section>
+__RECENT_SECTION__
 <button id="totop" type="button" title="Back to top" aria-label="Back to top">&#8593;</button>
 <section class="infosection" id="data" aria-label="Data and downloads">
   <h2>Data &amp; downloads</h2>
@@ -2481,7 +2524,10 @@ window.addEventListener("load",function(){setTimeout(doScroll,900);});
                 .replace("__SECTIONS__", sec_html)
                 .replace("__COVERAGE_NOTE__", coverage_note)
                 .replace("__STATIC_CATS__", static_cats)
-                .replace("__STATIC_RECENT__", static_recent)
+                .replace("__RECENT_SECTION__", recent_section if page == "catalog" else "")
+                .replace("The category and recent-filing tables further down this page are readable without it.",
+                         "The category table further down this page is readable without it." if page == "index"
+                         else "The recent-filing table further down this page is readable without it.")
                 .replace("__CLASSES__", class_json)
                 .replace("__SECTIONS_JSON__", section_names)
                 .replace("__META__", meta_json)
