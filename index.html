@@ -420,6 +420,14 @@ paint();})();
   <div class="seal">&#167;</div>
   <p class="eyebrow">PUBLIC RECORDS INDEX</p>
   <h1>Globally Rejustered Patent Catalog</h1>
+  <div style="margin:8px 0"><button type="button" onclick="readPageAloud()" style="background:#1a3a5c;color:#fff;border:1px solid #4a8ac9;padding:8px 16px;cursor:pointer;font:inherit">🔊 Read page aloud</button> <button type="button" onclick="if(window.speechSynthesis)window.speechSynthesis.cancel()" style="background:#333;color:#fff;border:1px solid #666;padding:8px 16px;cursor:pointer;font:inherit">⏹ Stop</button></div>
+  <script>
+  function readPageAloud(){
+    var txt=(document.body.innerText||'').replace(/\s+/g,' ').trim().slice(0,5000);
+    if(!txt)return;
+    try{if(window.speechSynthesis){window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(txt);u.rate=1;u.lang='en-US';window.speechSynthesis.speak(u);}else{alert('No voice available in this browser');}}catch(e){}
+  }
+  </script>
   <p class="sub">A growing public index of published patent records &mdash;
   every field of invention, from software to medicine to engineering &mdash; fully searchable.
   Harvesting is ongoing on a 30-minute cycle, so the collection gets larger every day &mdash;
