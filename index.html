@@ -1107,7 +1107,7 @@ function patentAISocial(r,q){
   if(typeof JAHtalk==="undefined")return null;
   var t=" "+String(q||"").toLowerCase()+" ";
   if(/(what are your duties|what is your duty|what do you do|what can you do|your duties|your job|your role|your abilities|explain your duties|who are you|your name|introduce yourself|what are you for|how are you)/.test(t))
-    return JAHtalk.reply(patentAIProfile(r),q);
+    return JAHtalk.chatFor(patentAIProfile(r),'patent:'+(r[0]||'')).reply(q);
   return null;
 }
 function patentAIraw(r, q){
