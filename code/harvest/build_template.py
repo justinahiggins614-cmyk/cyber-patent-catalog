@@ -995,7 +995,7 @@ __RECENT_SECTION__
     </dl>
   </div>
 </section>
-<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 8 OF 35</span>
+<nav aria-label="JAH Network Global Ecosystem" role="navigation"><div class="jahnet"><span class="jahnet-t">THE JAH NETWORK</span><span class="sitekicker">SITE 8 OF 39</span>
 <a href="https://justinahiggins614-cmyk.github.io/signature-math/" target="_blank" rel="noopener">1 Signature Math</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-calculator/" target="_blank" rel="noopener">2 Signature Universal Paradox Immune Calculator</a>
 <a href="https://justinahiggins614-cmyk.github.io/jah-dictionary/" target="_blank" rel="noopener">3 The Signature Dictionary</a>
